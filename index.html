@@ -93,10 +93,10 @@
         .fab.clear { background: var(--danger); }
 
         #bottom-nav {
-            position: fixed; bottom: 0; left: 0; right: 0; height: var(--bottom-nav-h); background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 2000; box-shadow: 0 -2px 8px rgba(0,0,0,0.05); padding-bottom: env(safe-area-inset-bottom);
+            position: fixed; bottom: 0; left: 0; right: 0; height: var(--bottom-nav-h); background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 2000; box-shadow: 0 -2px 8px rgba(0,0,0,0.05); padding-bottom: env(safe-area-inset-bottom); overflow-x: auto;
         }
         .nav-tab {
-            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 10px; font-weight: 600; color: var(--text2); background: none; border: none; padding: 6px 0; cursor: pointer; transition: 0.2s; border-top: 3px solid transparent;
+            flex: 1 0 auto; min-width: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 9px; font-weight: 600; color: var(--text2); background: none; border: none; padding: 4px 2px; cursor: pointer; transition: 0.2s; border-top: 3px solid transparent; white-space: nowrap;
         }
         .nav-tab.active { color: var(--primary); border-top-color: var(--primary); }
 
@@ -122,6 +122,7 @@
         .btn { padding: 10px 14px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; transition: 0.2s; font-size: 12px; background: var(--primary); color: #fff; }
         .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
         .btn-block { display: block; width: 100%; margin-bottom: 6px; }
+        .btn-sm { padding: 8px 12px; font-size: 10px; }
 
         .toast {
             position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 4000; background: #1a1a1a; color:#fff; padding: 10px 20px; border-radius: 30px; font-weight: 700; font-size: 12px; opacity: 0; transition: opacity 0.3s; pointer-events: none;
@@ -129,30 +130,41 @@
         .toast.show { opacity: 1; }
 
         .gnss-checkboxes {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 12px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;
         }
         .gnss-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            display: flex; align-items: center; gap: 8px; background: var(--surface); padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px;
+        }
+        .gnss-checkbox input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--primary); }
+
+        .sobre-box {
+            background: var(--surface); border-radius: var(--radius-sm); padding: 14px; margin-top: 16px; font-size: 11px; line-height: 1.5; color: var(--text2); border-left: 4px solid var(--primary);
+        }
+        .sobre-box h4 { color: var(--text); margin-bottom: 4px; font-size: 13px; }
+        .sobre-box a { color: var(--primary); text-decoration: none; }
+
+        .config-section, .tool-section {
+            margin-bottom: 14px;
             background: var(--surface);
-            padding: 10px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 13px;
+            border-radius: var(--radius-sm);
+            padding: 12px;
         }
-        .gnss-checkbox input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            accent-color: var(--primary);
+        .config-section label, .tool-section label {
+            display: block; font-weight: 700; font-size: 12px; margin-bottom: 4px; color: var(--text);
         }
+        .config-section select, .config-section input,
+        .tool-section select, .tool-section input {
+            width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 13px; margin-bottom: 6px;
+        }
+        .tool-result {
+            background: var(--surface2); border-radius: 8px; padding: 10px; font-size: 12px; margin-top: 8px; line-height: 1.6;
+        }
+        .tool-result strong { color: var(--primary); }
 
         @media (min-width: 768px) {
             .map-floating.info { left: 20px; max-width: 300px; }
             .leaflet-control-zoom { right: 20px !important; }
+            .nav-tab { font-size: 10px; }
         }
     </style>
 </head>
@@ -186,6 +198,7 @@
         </div>
     </div>
 
+    <!-- ABA DADOS -->
     <div class="tab-panel" id="tab-dados">
         <h3 style="margin-bottom:10px;">📊 Métricas da Coleta</h3>
         <div class="info-card-grid">
@@ -203,6 +216,7 @@
         </div>
     </div>
 
+    <!-- ABA EXPORTAR -->
     <div class="tab-panel" id="tab-exportar">
         <h3>📤 Exportar Dados</h3>
         <button class="btn btn-block" onclick="exportarKML()">📐 KML (Google Earth)</button>
@@ -213,57 +227,100 @@
         <button class="btn btn-outline btn-block" onclick="abrirImportar()">📥 Importar Arquivo</button>
     </div>
 
+    <!-- ABA CONFIG -->
     <div class="tab-panel" id="tab-config">
         <h3>⚙️ Configurações</h3>
-        <label>Datum</label>
-        <select id="config-datum" onchange="atualizarDatum()" style="width:100%;padding:10px;border-radius:8px;margin-bottom:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border);">
-            <option value="SIRGAS2000">SIRGAS 2000</option>
-            <option value="WGS84">WGS 84</option>
-            <option value="SAD69">SAD 69</option>
-        </select>
-
-        <label style="font-weight:700;margin-top:6px;display:block;">🛰️ Sistemas GNSS ativos</label>
-        <small style="color:var(--text2);">Selecione as constelações que deseja utilizar</small>
-        <div class="gnss-checkboxes" style="margin-top:8px;">
-            <label class="gnss-checkbox">
-                <input type="checkbox" id="gnss-gps" checked onchange="salvarConfigGNSS()">
-                <span>🇺🇸 GPS</span>
-            </label>
-            <label class="gnss-checkbox">
-                <input type="checkbox" id="gnss-glonass" checked onchange="salvarConfigGNSS()">
-                <span>🇷🇺 GLONASS</span>
-            </label>
-            <label class="gnss-checkbox">
-                <input type="checkbox" id="gnss-galileo" checked onchange="salvarConfigGNSS()">
-                <span>🇪🇺 Galileo</span>
-            </label>
-            <label class="gnss-checkbox">
-                <input type="checkbox" id="gnss-beidou" checked onchange="salvarConfigGNSS()">
-                <span>🇨🇳 BeiDou</span>
-            </label>
+        <div class="config-section">
+            <label>Datum</label>
+            <select id="config-datum" onchange="atualizarDatum()">
+                <option value="SIRGAS2000">SIRGAS 2000</option>
+                <option value="WGS84">WGS 84</option>
+                <option value="SAD69">SAD 69</option>
+            </select>
         </div>
-
-        <label>Modo Automático</label>
-        <select id="config-auto-mode" onchange="salvarConfigAutoMode()" style="width:100%;padding:10px;border-radius:8px;margin-bottom:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border);">
-            <option value="time">Tempo</option>
-            <option value="distance">Distância</option>
-            <option value="both">Ambos</option>
-        </select>
-        <label>Intervalo (segundos)</label>
-        <input type="number" id="config-auto-interval" value="5" min="1" onchange="salvarConfigAutoInterval()" style="width:100%;padding:10px;border-radius:8px;margin-bottom:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border);">
-        <label>Limiar de precisão (m)</label>
-        <input type="number" id="config-precision-threshold" value="5.0" step="0.1" onchange="salvarConfigPrecision()" style="width:100%;padding:10px;border-radius:8px;margin-bottom:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border);">
+        <div class="config-section">
+            <label>🛰️ Sistemas GNSS ativos</label>
+            <small style="color:var(--text2);">Selecione as constelações</small>
+            <div class="gnss-checkboxes" style="margin-top:8px;">
+                <label class="gnss-checkbox"><input type="checkbox" id="gnss-gps" checked onchange="salvarConfigGNSS()"><span>🇺🇸 GPS</span></label>
+                <label class="gnss-checkbox"><input type="checkbox" id="gnss-glonass" checked onchange="salvarConfigGNSS()"><span>🇷🇺 GLONASS</span></label>
+                <label class="gnss-checkbox"><input type="checkbox" id="gnss-galileo" checked onchange="salvarConfigGNSS()"><span>🇪🇺 Galileo</span></label>
+                <label class="gnss-checkbox"><input type="checkbox" id="gnss-beidou" checked onchange="salvarConfigGNSS()"><span>🇨🇳 BeiDou</span></label>
+            </div>
+        </div>
+        <div class="config-section">
+            <label>Modo Automático</label>
+            <select id="config-auto-mode" onchange="salvarConfigAutoMode()">
+                <option value="time">Tempo</option>
+                <option value="distance">Distância</option>
+                <option value="both">Ambos</option>
+            </select>
+        </div>
+        <div class="config-section">
+            <label>Intervalo (segundos)</label>
+            <input type="number" id="config-auto-interval" value="5" min="1" onchange="salvarConfigAutoInterval()">
+        </div>
+        <div class="config-section">
+            <label>Limiar de precisão (m)</label>
+            <input type="number" id="config-precision-threshold" value="5.0" step="0.1" onchange="salvarConfigPrecision()">
+        </div>
+        <div class="sobre-box">
+            <h4>📘 Sobre</h4>
+            <p>Aplicativo desenvolvido para coleta de dados GNSS e cálculo de áreas e distâncias em campo. Utiliza sistemas GNSS multiconstelação (GPS, GLONASS, Galileo e BeiDou), com referência no sistema SIRGAS 2000, incluindo controle de precisão e cálculo de erro médio. Indicado para uso técnico preliminar e educacional. Não substitui equipamentos geodésicos de alta precisão (RTK).</p>
+            <p style="margin-top:8px;"><strong>Desenvolvido por:</strong> J. P. Santos<br>
+            <strong>Contato:</strong> <a href="mailto:santosjp@uft.edu.br">santosjp@uft.edu.br</a><br>
+            <strong>Versão:</strong> 1.51</p>
+        </div>
     </div>
 
+    <!-- ABA FERRAMENTAS (NOVA) -->
+    <div class="tab-panel" id="tab-ferramentas">
+        <h3>🔧 Ferramentas</h3>
+
+        <!-- Distância e Azimute -->
+        <div class="tool-section">
+            <label>📏 Distância e Azimute entre Pontos</label>
+            <select id="tool-dist-p1" onchange="atualizarOpcoesDist()">
+                <option value="">Selecione o ponto 1</option>
+            </select>
+            <select id="tool-dist-p2" onchange="atualizarOpcoesDist()">
+                <option value="">Selecione o ponto 2</option>
+            </select>
+            <button class="btn btn-block btn-sm" onclick="calcularDistanciaAzimute()">Calcular Distância e Azimute</button>
+            <div class="tool-result" id="result-dist-azimute" style="display:none;"></div>
+        </div>
+
+        <!-- Adicionar Ponto por Coordenadas -->
+        <div class="tool-section">
+            <label>📍 Adicionar Ponto por Coordenadas</label>
+            <input type="number" id="tool-add-lat" placeholder="Latitude (ex: -15.7801)" step="any">
+            <input type="number" id="tool-add-lng" placeholder="Longitude (ex: -47.9292)" step="any">
+            <input type="number" id="tool-add-alt" placeholder="Altitude (opcional)" step="any">
+            <button class="btn btn-block btn-sm" onclick="adicionarPontoManual()">Adicionar Ponto</button>
+        </div>
+
+        <!-- Informações do Ponto -->
+        <div class="tool-section">
+            <label>🔍 Informações do Ponto</label>
+            <select id="tool-info-ponto" onchange="exibirInfoPonto()">
+                <option value="">Selecione um ponto</option>
+            </select>
+            <div class="tool-result" id="result-info-ponto" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- NAVEGAÇÃO INFERIOR (5 abas) -->
     <div id="bottom-nav">
-        <button class="nav-tab active" data-tab="mapa">🗺️ Mapa</button>
-        <button class="nav-tab" data-tab="dados">📊 Dados</button>
-        <button class="nav-tab" data-tab="exportar">📤 Exportar</button>
-        <button class="nav-tab" data-tab="config">⚙️ Config</button>
+        <button class="nav-tab active" data-tab="mapa">🗺️<span>Mapa</span></button>
+        <button class="nav-tab" data-tab="dados">📊<span>Dados</span></button>
+        <button class="nav-tab" data-tab="ferramentas">🔧<span>Ferramentas</span></button>
+        <button class="nav-tab" data-tab="exportar">📤<span>Exportar</span></button>
+        <button class="nav-tab" data-tab="config">⚙️<span>Config</span></button>
     </div>
 
     <div class="toast" id="toast"></div>
 
+    <!-- MODAIS -->
     <div class="modal-overlay" id="modal-projeto" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:3000;">
         <div style="background:var(--surface);padding:20px;border-radius:14px;width:90%;max-width:350px;">
             <h3>Salvar Projeto</h3>
@@ -302,6 +359,7 @@
                 watchId: null,
                 erroMedio: 0,
                 sessionSeed: Date.now(),
+                satelliteCount: 0,
             };
             const $ = id => document.getElementById(id);
             const toast = $('toast');
@@ -361,8 +419,6 @@
                 const errMed = precs.length ? precs.reduce((a,b)=>a+b,0)/precs.length : 0;
                 state.erroMedio = errMed;
                 const {area, perimetro} = (state.pontos.length>=3) ? calcularAreaPerimetroUTM() : {area:0,perimetro:0};
-                const els = ['float-area','float-ha','float-per','float-err','data-area','data-ha','data-per','data-err','data-pts'];
-                els.forEach(id=>{ if($(id)) $(id).textContent = ''; });
                 $('float-area').textContent = area.toFixed(2);
                 $('float-ha').textContent = (area/10000).toFixed(4);
                 $('float-per').textContent = perimetro.toFixed(2);
@@ -372,6 +428,7 @@
                 $('data-per').textContent = perimetro.toFixed(2);
                 $('data-err').textContent = errMed.toFixed(2);
                 $('data-pts').textContent = state.pontos.length;
+                atualizarDropdownsFerramentas();
             }
 
             function calcularAreaPerimetroUTM() {
@@ -394,8 +451,19 @@
                     </div>`).join('') : '<p style="text-align:center;color:var(--text2);">Nenhum ponto</p>';
             }
 
-            window.centralizarPonto = (i) => { if(state.pontos[i]) map.setView([state.pontos[i].lat, state.pontos[i].lng], 19); };
-            window.deletarPonto = (i) => { state.pontos.splice(i,1); atualizarPoligono(); atualizarUI(); atualizarLista(); salvar(); };
+            function atualizarDropdownsFerramentas() {
+                const dropdowns = ['tool-dist-p1', 'tool-dist-p2', 'tool-info-ponto'];
+                dropdowns.forEach(id => {
+                    const sel = $(id);
+                    if (!sel) return;
+                    const val = sel.value;
+                    sel.innerHTML = '<option value="">Selecione...</option>';
+                    state.pontos.forEach((p, i) => {
+                        sel.innerHTML += `<option value="${i}">Ponto #${i+1} (${p.lat.toFixed(5)}, ${p.lng.toFixed(5)})</option>`;
+                    });
+                    if (state.pontos[val]) sel.value = val;
+                });
+            }
 
             function atualizarPoligono() {
                 polygonGroup.clearLayers();
@@ -427,12 +495,15 @@
 
             function toggleModoAuto() {
                 state.autoMode = !state.autoMode;
-                $('btn-auto').style.background = state.autoMode ? 'var(--accent)' : 'var(--warning)';
+                const btnAuto = $('btn-auto');
+                if (btnAuto) btnAuto.style.background = state.autoMode ? 'var(--accent)' : 'var(--warning)';
                 if(state.autoMode) {
                     state.lastAutoPos = state.currentPos ? {lat:state.currentPos.lat, lng:state.currentPos.lng} : null;
                     state.autoInterval = setInterval(()=>{ if(state.autoMode && state.autoModeType==='time') verificarAuto(); }, state.autoIntervalSeconds*1000);
+                    showToast('🤖 Modo automático ativado','success');
                 } else {
                     clearInterval(state.autoInterval);
+                    showToast('🤖 Modo automático desativado','warn');
                 }
             }
             function verificarAuto() {
@@ -451,7 +522,83 @@
                 return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             }
 
-            function limparPontos() { if(state.pontos.length && confirm('Limpar todos?')) { state.pontos=[]; polygonGroup.clearLayers(); atualizarUI(); atualizarLista(); salvar(); } }
+            function limparPontos() {
+                if(!state.pontos.length) return;
+                if(confirm('Tem certeza que deseja limpar todos os pontos?')) {
+                    state.pontos=[];
+                    polygonGroup.clearLayers();
+                    atualizarUI(); atualizarLista(); salvar();
+                    showToast('🗑️ Pontos removidos','warn');
+                }
+            }
+
+            // NOVAS FUNÇÕES DA ABA FERRAMENTAS
+            function calcularDistanciaAzimute() {
+                const i1 = parseInt($('tool-dist-p1').value);
+                const i2 = parseInt($('tool-dist-p2').value);
+                const resultDiv = $('result-dist-azimute');
+                if (isNaN(i1) || isNaN(i2) || i1 === i2) {
+                    resultDiv.style.display = 'block';
+                    resultDiv.innerHTML = '⚠️ Selecione dois pontos distintos.';
+                    return;
+                }
+                const p1 = state.pontos[i1];
+                const p2 = state.pontos[i2];
+                const distH = calcularDist(p1.lat, p1.lng, p2.lat, p2.lng);
+                const distV = (p1.alt != null && p2.alt != null) ? Math.abs(p2.alt - p1.alt) : null;
+                const dist3D = distV != null ? Math.sqrt(distH*distH + distV*distV) : null;
+                const azimute = calcularAzimute(p1.lat, p1.lng, p2.lat, p2.lng);
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    <strong>Distância horizontal:</strong> ${distH.toFixed(2)} m<br>
+                    ${distV != null ? `<strong>Desnível:</strong> ${distV.toFixed(2)} m<br>` : ''}
+                    ${dist3D != null ? `<strong>Distância 3D:</strong> ${dist3D.toFixed(2)} m<br>` : ''}
+                    <strong>Azimute (de P1→P2):</strong> ${azimute.toFixed(2)}°`;
+            }
+
+            function calcularAzimute(lat1, lng1, lat2, lng2) {
+                const rad = Math.PI / 180;
+                const dLng = (lng2 - lng1) * rad;
+                const y = Math.sin(dLng) * Math.cos(lat2 * rad);
+                const x = Math.cos(lat1 * rad) * Math.sin(lat2 * rad) - Math.sin(lat1 * rad) * Math.cos(lat2 * rad) * Math.cos(dLng);
+                let az = Math.atan2(y, x) * 180 / Math.PI;
+                return (az + 360) % 360;
+            }
+
+            function adicionarPontoManual() {
+                const lat = parseFloat($('tool-add-lat').value);
+                const lng = parseFloat($('tool-add-lng').value);
+                const alt = parseFloat($('tool-add-alt').value) || null;
+                if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                    showToast('⚠️ Coordenadas inválidas','error');
+                    return;
+                }
+                const utm = latLngToUTM(lat, lng);
+                state.pontos.push({
+                    lat, lng, alt, precision: 0.5,
+                    utm_e: utm.easting, utm_n: utm.northing,
+                    utm_zonaStr: utm.zonaStr, timestamp: new Date()
+                });
+                atualizarPoligono(); atualizarUI(); atualizarLista(); salvar();
+                $('tool-add-lat').value = ''; $('tool-add-lng').value = ''; $('tool-add-alt').value = '';
+                showToast(`📍 Ponto #${state.pontos.length} adicionado manualmente`,'success');
+            }
+
+            function exibirInfoPonto() {
+                const i = parseInt($('tool-info-ponto').value);
+                const resultDiv = $('result-info-ponto');
+                if (isNaN(i)) { resultDiv.style.display = 'none'; return; }
+                const p = state.pontos[i];
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    <strong>Ponto #${i+1}</strong><br>
+                    <strong>Latitude:</strong> ${p.lat.toFixed(7)}°<br>
+                    <strong>Longitude:</strong> ${p.lng.toFixed(7)}°<br>
+                    <strong>UTM:</strong> ${p.utm_zonaStr} E:${p.utm_e.toFixed(2)} N:${p.utm_n.toFixed(2)}<br>
+                    <strong>Altitude:</strong> ${p.alt != null ? p.alt.toFixed(2)+' m' : 'N/D'}<br>
+                    <strong>Precisão:</strong> ${p.precision.toFixed(1)} m<br>
+                    <strong>Coletado em:</strong> ${new Date(p.timestamp).toLocaleString('pt-BR')}`;
+            }
 
             function salvar() { try{ localStorage.setItem('geoarea_v4', JSON.stringify({pontos:state.pontos, projeto:state.projetoNome, dark:state.darkMode, precision:state.precisionThreshold, datum:state.datum, autoType:state.autoModeType, autoInt:state.autoIntervalSeconds, gnssAtivos:state.gnssAtivos})); }catch(e){} }
             function carregar() {
@@ -481,8 +628,7 @@
                 state.gnssAtivos.glonass = $('gnss-glonass').checked;
                 state.gnssAtivos.galileo = $('gnss-galileo').checked;
                 state.gnssAtivos.beidou = $('gnss-beidou').checked;
-                aplicarVisibilidadeGNSS();
-                salvar();
+                aplicarVisibilidadeGNSS(); salvar();
                 showToast('🛰️ Sistemas GNSS atualizados','success');
             }
             function aplicarVisibilidadeGNSS() {
@@ -490,17 +636,16 @@
                 $('glonass-icon').style.display = state.gnssAtivos.glonass ? 'inline' : 'none';
                 $('galileo-icon').style.display = state.gnssAtivos.galileo ? 'inline' : 'none';
                 $('beidou-icon').style.display = state.gnssAtivos.beidou ? 'inline' : 'none';
-                // Recalcular satélites se houver posição atual
                 if(state.currentPos && state.satelliteCount) {
                     state.satelitesPorSistema = estimarSatelites(state.satelliteCount);
                     atualizarStatus();
                 }
             }
 
-            window.salvarConfigAutoMode = () => { state.autoModeType = $('config-auto-mode').value; salvar(); };
-            window.salvarConfigAutoInterval = () => { state.autoIntervalSeconds = parseInt($('config-auto-interval').value)||5; salvar(); };
-            window.salvarConfigPrecision = () => { state.precisionThreshold = parseFloat($('config-precision-threshold').value)||5.0; salvar(); };
-            window.atualizarDatum = () => { state.datum = $('config-datum').value; salvar(); };
+            function salvarConfigAutoMode() { state.autoModeType = $('config-auto-mode').value; salvar(); }
+            function salvarConfigAutoInterval() { state.autoIntervalSeconds = parseInt($('config-auto-interval').value)||5; salvar(); }
+            function salvarConfigPrecision() { state.precisionThreshold = parseFloat($('config-precision-threshold').value)||5.0; salvar(); }
+            function atualizarDatum() { state.datum = $('config-datum').value; salvar(); }
 
             function iniciarGeo() {
                 if(!navigator.geolocation) return;
@@ -511,7 +656,7 @@
                     state.satelliteCount = total;
                     state.satelitesPorSistema = estimarSatelites(total);
                     atualizarStatus();
-                }, err=>{ if(err.code===1) showToast('Permissão negada! Configure no navegador.','error'); }, {enableHighAccuracy:true});
+                }, err=>{ if(err.code===1) showToast('Permissão negada!','error'); }, {enableHighAccuracy:true});
             }
 
             function atualizarStatus() {
@@ -529,19 +674,30 @@
                 $('val-beidou').textContent = state.satelitesPorSistema.beidou;
             }
 
-            // Tabs
+            // Navegação por abas
             document.querySelectorAll('.nav-tab').forEach(btn => {
                 btn.addEventListener('click', ()=>{
                     document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
                     btn.classList.add('active');
-                    const tab = btn.dataset.tab;
                     document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('open'));
+                    const tab = btn.dataset.tab;
                     if(tab==='dados') { $('tab-dados').classList.add('open'); atualizarLista(); }
                     else if(tab==='exportar') $('tab-exportar').classList.add('open');
                     else if(tab==='config') $('tab-config').classList.add('open');
+                    else if(tab==='ferramentas') { $('tab-ferramentas').classList.add('open'); atualizarDropdownsFerramentas(); }
                 });
             });
 
+            // Expor funções ao escopo global
+            window.coletarPonto = coletarPonto;
+            window.toggleModoAuto = toggleModoAuto;
+            window.limparPontos = limparPontos;
+            window.centralizarPonto = (i) => { if(state.pontos[i]) map.setView([state.pontos[i].lat, state.pontos[i].lng], 19); };
+            window.deletarPonto = (i) => { state.pontos.splice(i,1); atualizarPoligono(); atualizarUI(); atualizarLista(); salvar(); };
+            window.calcularDistanciaAzimute = calcularDistanciaAzimute;
+            window.adicionarPontoManual = adicionarPontoManual;
+            window.exibirInfoPonto = exibirInfoPonto;
+            window.atualizarOpcoesDist = () => {};
             window.abrirModal = (id) => { $(id).style.display='flex'; };
             window.fecharModal = (id) => { $(id).style.display='none'; };
             window.salvarProjeto = () => {
@@ -570,15 +726,18 @@
                     showToast(`Projeto ${nome} carregado`,'success');
                 }
             };
-
-            window.exportarKML = () => { /* Implementação simplificada */ };
-            window.exportarCSV = () => { /* ... */ };
-            window.exportarGeoJSON = () => { /* ... */ };
-            window.compartilhar = () => { /* ... */ };
-            window.abrirRelatorio = () => { /* ... */ };
-            window.abrirImportar = () => { /* ... */ };
-
+            window.exportarKML = () => { showToast('Exportação KML em breve','warn'); };
+            window.exportarCSV = () => { showToast('Exportação CSV em breve','warn'); };
+            window.exportarGeoJSON = () => { showToast('Exportação GeoJSON em breve','warn'); };
+            window.compartilhar = () => { showToast('Compartilhamento em breve','warn'); };
+            window.abrirRelatorio = () => { showToast('Relatório em breve','warn'); };
+            window.abrirImportar = () => { showToast('Importação em breve','warn'); };
             window.toggleDarkMode = () => { state.darkMode=!state.darkMode; document.body.classList.toggle('dark-mode'); salvar(); };
+            window.atualizarDatum = atualizarDatum;
+            window.salvarConfigGNSS = salvarConfigGNSS;
+            window.salvarConfigAutoMode = salvarConfigAutoMode;
+            window.salvarConfigAutoInterval = salvarConfigAutoInterval;
+            window.salvarConfigPrecision = salvarConfigPrecision;
 
             init();
             function init() {
