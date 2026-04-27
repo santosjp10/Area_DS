@@ -58,6 +58,7 @@
         }
         #map { width: 100%; height: 100%; }
 
+        /* Controle de zoom posicionado à direita com margem */
         .leaflet-control-zoom {
             top: 10px !important;
             right: 10px !important;
@@ -74,13 +75,16 @@
             font-size: 18px !important;
         }
 
+        /* Painel de informações com margem direita para não sobrepor o zoom */
         .map-floating {
             position: absolute; z-index: 500; background: var(--surface); border-radius: var(--radius); padding: 10px 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); backdrop-filter: blur(6px); transition: all 0.25s; font-size: 11px; display: flex; flex-direction: column; gap: 6px;
         }
         .map-floating.info {
-            top: 10px; left: 10px;
-            max-width: calc(100% - 60px);
+            top: 10px; 
+            left: 10px;
+            max-width: calc(100% - 80px); /* espaço extra para o controle de zoom */
             min-width: 120px;
+            margin-right: 70px; /* margem direita para não encostar no zoom */
         }
         .map-floating.actions { bottom: 20px; right: 16px; flex-direction: row; gap: 10px; padding: 8px; }
         .map-floating .val { font-weight: 800; font-size: 14px; color: var(--primary); }
@@ -161,14 +165,40 @@
         }
         .tool-result strong { color: var(--primary); }
 
+        /* Password lock overlay */
+        #lock-overlay {
+            position: fixed; inset: 0; z-index: 5000; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+        }
+        .lock-modal {
+            background: var(--surface); border-radius: 20px; padding: 30px 24px; width: 90%; max-width: 340px; text-align: center; box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+        }
+        .lock-modal h2 { font-size: 20px; margin-bottom: 6px; }
+        .lock-modal p { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+        .lock-modal input {
+            width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 8px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface2); color: var(--text); margin-bottom: 16px; font-weight: 700;
+        }
+        .lock-modal .error-msg { color: var(--danger); font-size: 12px; margin-bottom: 8px; display: none; }
+        .lock-modal button { width: 100%; padding: 14px; font-size: 16px; }
+
         @media (min-width: 768px) {
-            .map-floating.info { left: 20px; max-width: 300px; }
+            .map-floating.info { left: 20px; max-width: 350px; margin-right: 0; }
             .leaflet-control-zoom { right: 20px !important; }
             .nav-tab { font-size: 10px; }
         }
     </style>
 </head>
 <body>
+    <!-- TELA DE BLOQUEIO POR SENHA -->
+    <div id="lock-overlay">
+        <div class="lock-modal">
+            <h2>🔐 GeoÁrea GNSS</h2>
+            <p>Digite a senha de acesso</p>
+            <input type="password" id="lock-password" inputmode="numeric" maxlength="4" placeholder="····" autocomplete="off">
+            <div class="error-msg" id="lock-error">Senha incorreta</div>
+            <button class="btn btn-primary" id="lock-btn">Entrar</button>
+        </div>
+    </div>
+
     <div id="status-bar">
         <div class="status-item"><span class="status-dot" id="dot-precision"></span><span id="val-precision">--</span></div>
         <div class="status-item"><span>📍</span><span id="val-latlon" style="font-size:9px;">--</span></div>
@@ -273,24 +303,16 @@
         </div>
     </div>
 
-    <!-- ABA FERRAMENTAS (NOVA) -->
+    <!-- ABA FERRAMENTAS -->
     <div class="tab-panel" id="tab-ferramentas">
         <h3>🔧 Ferramentas</h3>
-
-        <!-- Distância e Azimute -->
         <div class="tool-section">
             <label>📏 Distância e Azimute entre Pontos</label>
-            <select id="tool-dist-p1" onchange="atualizarOpcoesDist()">
-                <option value="">Selecione o ponto 1</option>
-            </select>
-            <select id="tool-dist-p2" onchange="atualizarOpcoesDist()">
-                <option value="">Selecione o ponto 2</option>
-            </select>
+            <select id="tool-dist-p1" onchange="atualizarOpcoesDist()"><option value="">Selecione o ponto 1</option></select>
+            <select id="tool-dist-p2" onchange="atualizarOpcoesDist()"><option value="">Selecione o ponto 2</option></select>
             <button class="btn btn-block btn-sm" onclick="calcularDistanciaAzimute()">Calcular Distância e Azimute</button>
             <div class="tool-result" id="result-dist-azimute" style="display:none;"></div>
         </div>
-
-        <!-- Adicionar Ponto por Coordenadas -->
         <div class="tool-section">
             <label>📍 Adicionar Ponto por Coordenadas</label>
             <input type="number" id="tool-add-lat" placeholder="Latitude (ex: -15.7801)" step="any">
@@ -298,18 +320,14 @@
             <input type="number" id="tool-add-alt" placeholder="Altitude (opcional)" step="any">
             <button class="btn btn-block btn-sm" onclick="adicionarPontoManual()">Adicionar Ponto</button>
         </div>
-
-        <!-- Informações do Ponto -->
         <div class="tool-section">
             <label>🔍 Informações do Ponto</label>
-            <select id="tool-info-ponto" onchange="exibirInfoPonto()">
-                <option value="">Selecione um ponto</option>
-            </select>
+            <select id="tool-info-ponto" onchange="exibirInfoPonto()"><option value="">Selecione um ponto</option></select>
             <div class="tool-result" id="result-info-ponto" style="display:none;"></div>
         </div>
     </div>
 
-    <!-- NAVEGAÇÃO INFERIOR (5 abas) -->
+    <!-- NAVEGAÇÃO INFERIOR -->
     <div id="bottom-nav">
         <button class="nav-tab active" data-tab="mapa">🗺️<span>Mapa</span></button>
         <button class="nav-tab" data-tab="dados">📊<span>Dados</span></button>
@@ -320,7 +338,6 @@
 
     <div class="toast" id="toast"></div>
 
-    <!-- MODAIS -->
     <div class="modal-overlay" id="modal-projeto" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:3000;">
         <div style="background:var(--surface);padding:20px;border-radius:14px;width:90%;max-width:350px;">
             <h3>Salvar Projeto</h3>
@@ -341,6 +358,47 @@
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
     <script>
         (function() {
+            const SENHA_NATIVA = "2444";
+            const lockOverlay = document.getElementById('lock-overlay');
+            const lockInput = document.getElementById('lock-password');
+            const lockBtn = document.getElementById('lock-btn');
+            const lockError = document.getElementById('lock-error');
+
+            function verificarSenha() {
+                const digitado = lockInput.value.trim();
+                if (digitado === SENHA_NATIVA) {
+                    lockOverlay.style.display = 'none';
+                    sessionStorage.setItem('geoarea_unlocked', 'true');
+                } else {
+                    lockError.style.display = 'block';
+                    lockInput.value = '';
+                    lockInput.focus();
+                }
+            }
+
+            if (sessionStorage.getItem('geoarea_unlocked') === 'true') {
+                lockOverlay.style.display = 'none';
+            } else {
+                lockInput.focus();
+                lockBtn.addEventListener('click', verificarSenha);
+                lockInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') verificarSenha();
+                    lockError.style.display = 'none';
+                });
+                document.querySelectorAll('#status-bar, #map-container, #bottom-nav, .tab-panel, .modal-overlay').forEach(el => {
+                    el.style.pointerEvents = 'none';
+                });
+                const unlockObserver = new MutationObserver(() => {
+                    if (lockOverlay.style.display === 'none') {
+                        document.querySelectorAll('#status-bar, #map-container, #bottom-nav, .tab-panel, .modal-overlay').forEach(el => {
+                            el.style.pointerEvents = '';
+                        });
+                        unlockObserver.disconnect();
+                    }
+                });
+                unlockObserver.observe(lockOverlay, { attributes: true, attributeFilter: ['style'] });
+            }
+
             const state = {
                 pontos: [],
                 currentPos: null,
@@ -458,9 +516,7 @@
                     if (!sel) return;
                     const val = sel.value;
                     sel.innerHTML = '<option value="">Selecione...</option>';
-                    state.pontos.forEach((p, i) => {
-                        sel.innerHTML += `<option value="${i}">Ponto #${i+1} (${p.lat.toFixed(5)}, ${p.lng.toFixed(5)})</option>`;
-                    });
+                    state.pontos.forEach((p, i) => sel.innerHTML += `<option value="${i}">Ponto #${i+1} (${p.lat.toFixed(5)}, ${p.lng.toFixed(5)})</option>`);
                     if (state.pontos[val]) sel.value = val;
                 });
             }
@@ -532,7 +588,6 @@
                 }
             }
 
-            // NOVAS FUNÇÕES DA ABA FERRAMENTAS
             function calcularDistanciaAzimute() {
                 const i1 = parseInt($('tool-dist-p1').value);
                 const i2 = parseInt($('tool-dist-p2').value);
@@ -553,7 +608,7 @@
                     <strong>Distância horizontal:</strong> ${distH.toFixed(2)} m<br>
                     ${distV != null ? `<strong>Desnível:</strong> ${distV.toFixed(2)} m<br>` : ''}
                     ${dist3D != null ? `<strong>Distância 3D:</strong> ${dist3D.toFixed(2)} m<br>` : ''}
-                    <strong>Azimute (de P1→P2):</strong> ${azimute.toFixed(2)}°`;
+                    <strong>Azimute (P1→P2):</strong> ${azimute.toFixed(2)}°`;
             }
 
             function calcularAzimute(lat1, lng1, lat2, lng2) {
@@ -574,14 +629,10 @@
                     return;
                 }
                 const utm = latLngToUTM(lat, lng);
-                state.pontos.push({
-                    lat, lng, alt, precision: 0.5,
-                    utm_e: utm.easting, utm_n: utm.northing,
-                    utm_zonaStr: utm.zonaStr, timestamp: new Date()
-                });
+                state.pontos.push({ lat, lng, alt, precision: 0.5, utm_e: utm.easting, utm_n: utm.northing, utm_zonaStr: utm.zonaStr, timestamp: new Date() });
                 atualizarPoligono(); atualizarUI(); atualizarLista(); salvar();
                 $('tool-add-lat').value = ''; $('tool-add-lng').value = ''; $('tool-add-alt').value = '';
-                showToast(`📍 Ponto #${state.pontos.length} adicionado manualmente`,'success');
+                showToast(`📍 Ponto #${state.pontos.length} adicionado`,'success');
             }
 
             function exibirInfoPonto() {
@@ -592,12 +643,12 @@
                 resultDiv.style.display = 'block';
                 resultDiv.innerHTML = `
                     <strong>Ponto #${i+1}</strong><br>
-                    <strong>Latitude:</strong> ${p.lat.toFixed(7)}°<br>
-                    <strong>Longitude:</strong> ${p.lng.toFixed(7)}°<br>
+                    <strong>Lat:</strong> ${p.lat.toFixed(7)}°<br>
+                    <strong>Lng:</strong> ${p.lng.toFixed(7)}°<br>
                     <strong>UTM:</strong> ${p.utm_zonaStr} E:${p.utm_e.toFixed(2)} N:${p.utm_n.toFixed(2)}<br>
-                    <strong>Altitude:</strong> ${p.alt != null ? p.alt.toFixed(2)+' m' : 'N/D'}<br>
-                    <strong>Precisão:</strong> ${p.precision.toFixed(1)} m<br>
-                    <strong>Coletado em:</strong> ${new Date(p.timestamp).toLocaleString('pt-BR')}`;
+                    <strong>Alt:</strong> ${p.alt != null ? p.alt.toFixed(2)+' m' : 'N/D'}<br>
+                    <strong>Prec:</strong> ${p.precision.toFixed(1)} m<br>
+                    <strong>Data:</strong> ${new Date(p.timestamp).toLocaleString('pt-BR')}`;
             }
 
             function salvar() { try{ localStorage.setItem('geoarea_v4', JSON.stringify({pontos:state.pontos, projeto:state.projetoNome, dark:state.darkMode, precision:state.precisionThreshold, datum:state.datum, autoType:state.autoModeType, autoInt:state.autoIntervalSeconds, gnssAtivos:state.gnssAtivos})); }catch(e){} }
@@ -674,7 +725,6 @@
                 $('val-beidou').textContent = state.satelitesPorSistema.beidou;
             }
 
-            // Navegação por abas
             document.querySelectorAll('.nav-tab').forEach(btn => {
                 btn.addEventListener('click', ()=>{
                     document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
@@ -688,7 +738,6 @@
                 });
             });
 
-            // Expor funções ao escopo global
             window.coletarPonto = coletarPonto;
             window.toggleModoAuto = toggleModoAuto;
             window.limparPontos = limparPontos;
@@ -697,7 +746,6 @@
             window.calcularDistanciaAzimute = calcularDistanciaAzimute;
             window.adicionarPontoManual = adicionarPontoManual;
             window.exibirInfoPonto = exibirInfoPonto;
-            window.atualizarOpcoesDist = () => {};
             window.abrirModal = (id) => { $(id).style.display='flex'; };
             window.fecharModal = (id) => { $(id).style.display='none'; };
             window.salvarProjeto = () => {
