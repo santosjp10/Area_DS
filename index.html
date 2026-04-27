@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>GeoÁrea GNSS · Multi-constelação</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
     <style>
         :root {
             --bg: #f5f5f0;
@@ -58,7 +57,6 @@
         }
         #map { width: 100%; height: 100%; }
 
-        /* Controle de zoom posicionado à direita com margem */
         .leaflet-control-zoom {
             top: 10px !important;
             right: 10px !important;
@@ -75,26 +73,32 @@
             font-size: 18px !important;
         }
 
-        /* Painel de informações com margem direita para não sobrepor o zoom */
         .map-floating {
-            position: absolute; z-index: 500; background: var(--surface); border-radius: var(--radius); padding: 10px 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); backdrop-filter: blur(6px); transition: all 0.25s; font-size: 11px; display: flex; flex-direction: column; gap: 6px;
+            position: absolute; z-index: 500; background: var(--surface); border-radius: var(--radius); padding: 8px 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); backdrop-filter: blur(6px); transition: all 0.25s; font-size: 10px;
         }
         .map-floating.info {
-            top: 10px; 
-            left: 10px;
-            max-width: calc(100% - 80px); /* espaço extra para o controle de zoom */
-            min-width: 120px;
-            margin-right: 70px; /* margem direita para não encostar no zoom */
+            top: 10px; left: 10px; max-width: calc(100% - 60px); min-width: 150px; display: flex; flex-direction: column; gap: 4px;
         }
-        .map-floating.actions { bottom: 20px; right: 16px; flex-direction: row; gap: 10px; padding: 8px; }
-        .map-floating .val { font-weight: 800; font-size: 14px; color: var(--primary); }
-        .map-floating .lbl { font-size: 8px; text-transform: uppercase; color: var(--text2); }
+        .map-floating.info .info-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px;
+        }
+        .map-floating.info .info-item { display: flex; align-items: baseline; gap: 3px; }
+        .map-floating.info .val { font-weight: 800; font-size: 13px; color: var(--primary); white-space: nowrap; }
+        .map-floating.info .lbl { font-size: 7px; text-transform: uppercase; color: var(--text2); }
+        .map-floating.info .info-toggle {
+            position: absolute; top: 2px; right: 6px; background: none; border: none; font-size: 12px; cursor: pointer; color: var(--text2); padding: 2px 4px; border-radius: 4px;
+        }
+        .map-floating.info.collapsed .info-grid { display: none; }
+        .map-floating.info.collapsed { padding: 6px 10px; }
+        .map-floating.actions { bottom: 20px; right: 16px; flex-direction: row; gap: 10px; padding: 8px; display: flex; }
+        .map-floating.center-btn { bottom: 20px; left: 16px; padding: 8px; }
 
         .fab {
             width: 48px; height: 48px; border-radius: 50%; background: var(--success); color: #fff; border: none; font-size: 22px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;
         }
         .fab.auto { background: var(--warning); color: #1a1a1a; }
         .fab.clear { background: var(--danger); }
+        .fab.center { background: var(--primary); font-size: 20px; }
 
         #bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0; height: var(--bottom-nav-h); background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 2000; box-shadow: 0 -2px 8px rgba(0,0,0,0.05); padding-bottom: env(safe-area-inset-bottom); overflow-x: auto;
@@ -109,19 +113,15 @@
         }
         .tab-panel.open { display: block; }
 
-        .info-card-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(90px,1fr)); gap: 8px; margin-bottom: 12px;
-        }
-        .info-card {
-            background: var(--surface); border-radius: var(--radius-sm); padding: 10px; text-align: center; font-weight: 700;
-        }
+        .info-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px,1fr)); gap: 8px; margin-bottom: 12px; }
+        .info-card { background: var(--surface); border-radius: var(--radius-sm); padding: 10px; text-align: center; font-weight: 700; }
         .info-card .val { font-size: 18px; color: var(--primary); }
         .info-card .lbl { font-size: 9px; color: var(--text2); text-transform: uppercase; }
 
         .point-item { display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--surface); border-radius: 8px; margin-bottom: 4px; font-size: 11px; cursor: pointer; }
         .point-item .idx { font-weight: 800; color: var(--primary); }
-        .point-item .coords { flex:1; font-size: 9px; color: var(--text2); }
-        .del-btn { background: var(--danger); color:#fff; border:none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; }
+        .point-item .coords { flex:1; font-size: 9px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .del-btn { background: var(--danger); color:#fff; border:none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; flex-shrink: 0; }
 
         .btn { padding: 10px 14px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; transition: 0.2s; font-size: 12px; background: var(--primary); color: #fff; }
         .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
@@ -133,62 +133,37 @@
         }
         .toast.show { opacity: 1; }
 
-        .gnss-checkboxes {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;
-        }
-        .gnss-checkbox {
-            display: flex; align-items: center; gap: 8px; background: var(--surface); padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px;
-        }
+        .gnss-checkboxes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .gnss-checkbox { display: flex; align-items: center; gap: 8px; background: var(--surface); padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; }
         .gnss-checkbox input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--primary); }
 
-        .sobre-box {
-            background: var(--surface); border-radius: var(--radius-sm); padding: 14px; margin-top: 16px; font-size: 11px; line-height: 1.5; color: var(--text2); border-left: 4px solid var(--primary);
-        }
+        .sobre-box { background: var(--surface); border-radius: var(--radius-sm); padding: 14px; margin-top: 16px; font-size: 11px; line-height: 1.5; color: var(--text2); border-left: 4px solid var(--primary); }
         .sobre-box h4 { color: var(--text); margin-bottom: 4px; font-size: 13px; }
-        .sobre-box a { color: var(--primary); text-decoration: none; }
 
-        .config-section, .tool-section {
-            margin-bottom: 14px;
-            background: var(--surface);
-            border-radius: var(--radius-sm);
-            padding: 12px;
-        }
-        .config-section label, .tool-section label {
-            display: block; font-weight: 700; font-size: 12px; margin-bottom: 4px; color: var(--text);
-        }
-        .config-section select, .config-section input,
-        .tool-section select, .tool-section input {
+        .config-section, .tool-section { margin-bottom: 14px; background: var(--surface); border-radius: var(--radius-sm); padding: 12px; }
+        .config-section label, .tool-section label { display: block; font-weight: 700; font-size: 12px; margin-bottom: 4px; color: var(--text); }
+        .config-section select, .config-section input, .tool-section select, .tool-section input {
             width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 13px; margin-bottom: 6px;
         }
-        .tool-result {
-            background: var(--surface2); border-radius: 8px; padding: 10px; font-size: 12px; margin-top: 8px; line-height: 1.6;
-        }
+        .tool-result { background: var(--surface2); border-radius: 8px; padding: 10px; font-size: 12px; margin-top: 8px; line-height: 1.6; }
         .tool-result strong { color: var(--primary); }
 
-        /* Password lock overlay */
-        #lock-overlay {
-            position: fixed; inset: 0; z-index: 5000; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);
-        }
-        .lock-modal {
-            background: var(--surface); border-radius: 20px; padding: 30px 24px; width: 90%; max-width: 340px; text-align: center; box-shadow: 0 16px 40px rgba(0,0,0,0.5);
-        }
+        #lock-overlay { position: fixed; inset: 0; z-index: 5000; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .lock-modal { background: var(--surface); border-radius: 20px; padding: 30px 24px; width: 90%; max-width: 340px; text-align: center; box-shadow: 0 16px 40px rgba(0,0,0,0.5); }
         .lock-modal h2 { font-size: 20px; margin-bottom: 6px; }
         .lock-modal p { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
-        .lock-modal input {
-            width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 8px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface2); color: var(--text); margin-bottom: 16px; font-weight: 700;
-        }
+        .lock-modal input { width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 8px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface2); color: var(--text); margin-bottom: 16px; font-weight: 700; }
         .lock-modal .error-msg { color: var(--danger); font-size: 12px; margin-bottom: 8px; display: none; }
         .lock-modal button { width: 100%; padding: 14px; font-size: 16px; }
 
         @media (min-width: 768px) {
-            .map-floating.info { left: 20px; max-width: 350px; margin-right: 0; }
+            .map-floating.info { left: 20px; max-width: 350px; }
             .leaflet-control-zoom { right: 20px !important; }
             .nav-tab { font-size: 10px; }
         }
     </style>
 </head>
 <body>
-    <!-- TELA DE BLOQUEIO POR SENHA -->
     <div id="lock-overlay">
         <div class="lock-modal">
             <h2>🔐 GeoÁrea GNSS</h2>
@@ -215,20 +190,26 @@
 
     <div id="map-container">
         <div id="map"></div>
+        <!-- Info flutuante redesenhada -->
         <div class="map-floating info" id="map-info-overlay">
-            <div><span class="val" id="float-area">0.00</span><span class="lbl"> m²</span></div>
-            <div><span class="val" id="float-ha">0.0000</span><span class="lbl"> ha</span></div>
-            <div><span class="val" id="float-per">0.00</span><span class="lbl"> m (perímetro)</span></div>
-            <div><span class="val" id="float-err">--</span><span class="lbl"> m (erro médio)</span></div>
+            <button class="info-toggle" id="info-toggle-btn" onclick="toggleInfoPanel()" title="Minimizar/Expandir">▾</button>
+            <div class="info-grid">
+                <div class="info-item"><span class="val" id="float-area">0.00</span><span class="lbl">m²</span></div>
+                <div class="info-item"><span class="val" id="float-ha">0.0000</span><span class="lbl">ha</span></div>
+                <div class="info-item"><span class="val" id="float-per">0.00</span><span class="lbl">m (perim.)</span></div>
+                <div class="info-item"><span class="val" id="float-err">--</span><span class="lbl">m (erro méd.)</span></div>
+            </div>
         </div>
         <div class="map-floating actions">
             <button class="fab" id="btn-collect" onclick="coletarPonto()" title="Coletar ponto">📌</button>
             <button class="fab auto" id="btn-auto" onclick="toggleModoAuto()" title="Modo automático">⏱️</button>
             <button class="fab clear" onclick="limparPontos()" title="Limpar pontos">🗑️</button>
         </div>
+        <div class="map-floating center-btn">
+            <button class="fab center" onclick="centralizarUsuario()" title="Centralizar na minha localização">🎯</button>
+        </div>
     </div>
 
-    <!-- ABA DADOS -->
     <div class="tab-panel" id="tab-dados">
         <h3 style="margin-bottom:10px;">📊 Métricas da Coleta</h3>
         <div class="info-card-grid">
@@ -246,7 +227,6 @@
         </div>
     </div>
 
-    <!-- ABA EXPORTAR -->
     <div class="tab-panel" id="tab-exportar">
         <h3>📤 Exportar Dados</h3>
         <button class="btn btn-block" onclick="exportarKML()">📐 KML (Google Earth)</button>
@@ -255,9 +235,16 @@
         <button class="btn btn-block" onclick="compartilhar()">📲 Compartilhar</button>
         <button class="btn btn-block" onclick="abrirRelatorio()">📄 Relatório Técnico</button>
         <button class="btn btn-outline btn-block" onclick="abrirImportar()">📥 Importar Arquivo</button>
+        <input type="file" id="file-import" accept=".kml,.geojson,.json,.csv" style="display:none;" onchange="importarArquivo(event)">
     </div>
 
-    <!-- ABA CONFIG -->
+    <div class="tab-panel" id="tab-relatorio" style="display:none;">
+        <h3>📄 Relatório Técnico</h3>
+        <div id="relatorio-content" style="font-size:11px;line-height:1.6;max-height:60vh;overflow-y:auto;background:var(--surface);padding:14px;border-radius:8px;"></div>
+        <button class="btn btn-block" onclick="baixarRelatorio()" style="margin-top:8px;">⬇️ Baixar Relatório</button>
+        <button class="btn btn-outline btn-block" onclick="document.getElementById('tab-relatorio').style.display='none'">Fechar</button>
+    </div>
+
     <div class="tab-panel" id="tab-config">
         <h3>⚙️ Configurações</h3>
         <div class="config-section">
@@ -270,7 +257,6 @@
         </div>
         <div class="config-section">
             <label>🛰️ Sistemas GNSS ativos</label>
-            <small style="color:var(--text2);">Selecione as constelações</small>
             <div class="gnss-checkboxes" style="margin-top:8px;">
                 <label class="gnss-checkbox"><input type="checkbox" id="gnss-gps" checked onchange="salvarConfigGNSS()"><span>🇺🇸 GPS</span></label>
                 <label class="gnss-checkbox"><input type="checkbox" id="gnss-glonass" checked onchange="salvarConfigGNSS()"><span>🇷🇺 GLONASS</span></label>
@@ -303,13 +289,12 @@
         </div>
     </div>
 
-    <!-- ABA FERRAMENTAS -->
     <div class="tab-panel" id="tab-ferramentas">
         <h3>🔧 Ferramentas</h3>
         <div class="tool-section">
             <label>📏 Distância e Azimute entre Pontos</label>
-            <select id="tool-dist-p1" onchange="atualizarOpcoesDist()"><option value="">Selecione o ponto 1</option></select>
-            <select id="tool-dist-p2" onchange="atualizarOpcoesDist()"><option value="">Selecione o ponto 2</option></select>
+            <select id="tool-dist-p1"><option value="">Selecione o ponto 1</option></select>
+            <select id="tool-dist-p2"><option value="">Selecione o ponto 2</option></select>
             <button class="btn btn-block btn-sm" onclick="calcularDistanciaAzimute()">Calcular Distância e Azimute</button>
             <div class="tool-result" id="result-dist-azimute" style="display:none;"></div>
         </div>
@@ -327,7 +312,6 @@
         </div>
     </div>
 
-    <!-- NAVEGAÇÃO INFERIOR -->
     <div id="bottom-nav">
         <button class="nav-tab active" data-tab="mapa">🗺️<span>Mapa</span></button>
         <button class="nav-tab" data-tab="dados">📊<span>Dados</span></button>
@@ -355,18 +339,16 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
     <script>
         (function() {
-            const SENHA_NATIVA = "2444";
+            const SENHA = "2444";
             const lockOverlay = document.getElementById('lock-overlay');
             const lockInput = document.getElementById('lock-password');
             const lockBtn = document.getElementById('lock-btn');
             const lockError = document.getElementById('lock-error');
 
             function verificarSenha() {
-                const digitado = lockInput.value.trim();
-                if (digitado === SENHA_NATIVA) {
+                if (lockInput.value.trim() === SENHA) {
                     lockOverlay.style.display = 'none';
                     sessionStorage.setItem('geoarea_unlocked', 'true');
                 } else {
@@ -381,22 +363,15 @@
             } else {
                 lockInput.focus();
                 lockBtn.addEventListener('click', verificarSenha);
-                lockInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') verificarSenha();
-                    lockError.style.display = 'none';
+                lockInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verificarSenha(); lockError.style.display = 'none'; });
+                ['#status-bar', '#map-container', '#bottom-nav', '.tab-panel', '.modal-overlay'].forEach(s => {
+                    document.querySelectorAll(s).forEach(el => el.style.pointerEvents = 'none');
                 });
-                document.querySelectorAll('#status-bar, #map-container, #bottom-nav, .tab-panel, .modal-overlay').forEach(el => {
-                    el.style.pointerEvents = 'none';
-                });
-                const unlockObserver = new MutationObserver(() => {
+                new MutationObserver(() => {
                     if (lockOverlay.style.display === 'none') {
-                        document.querySelectorAll('#status-bar, #map-container, #bottom-nav, .tab-panel, .modal-overlay').forEach(el => {
-                            el.style.pointerEvents = '';
-                        });
-                        unlockObserver.disconnect();
+                        document.querySelectorAll('#status-bar, #map-container, #bottom-nav, .tab-panel, .modal-overlay').forEach(el => el.style.pointerEvents = '');
                     }
-                });
-                unlockObserver.observe(lockOverlay, { attributes: true, attributeFilter: ['style'] });
+                }).observe(lockOverlay, { attributes: true, attributeFilter: ['style'] });
             }
 
             const state = {
@@ -404,20 +379,10 @@
                 currentPos: null,
                 satelitesPorSistema: { gps:0, glonass:0, galileo:0, beidou:0 },
                 gnssAtivos: { gps: true, glonass: true, galileo: true, beidou: true },
-                autoMode: false,
-                autoInterval: null,
-                autoModeType: 'time',
-                autoIntervalSeconds: 5,
-                lastAutoPos: null,
-                precisionThreshold: 5.0,
-                datum: 'SIRGAS2000',
-                darkMode: false,
-                mapLayer: 'street',
-                projetoNome: 'Área sem nome',
-                watchId: null,
-                erroMedio: 0,
-                sessionSeed: Date.now(),
-                satelliteCount: 0,
+                autoMode: false, autoInterval: null, autoModeType: 'time', autoIntervalSeconds: 5,
+                lastAutoPos: null, precisionThreshold: 5.0, datum: 'SIRGAS2000',
+                darkMode: false, projetoNome: 'Área sem nome', watchId: null,
+                erroMedio: 0, sessionSeed: Date.now(), satelliteCount: 0,
             };
             const $ = id => document.getElementById(id);
             const toast = $('toast');
@@ -432,7 +397,6 @@
             L.control.layers({Rua:layerStreet, Satélite:layerSatellite}, {}, {position:'topright', collapsed:true}).addTo(map);
             layerStreet.addTo(map);
             const polygonGroup = L.layerGroup().addTo(map);
-            const currentPosGroup = L.layerGroup().addTo(map);
 
             function latLngToUTM(lat,lng) {
                 const a=6378137,f=1/298.257223563,k0=0.9996,e=Math.sqrt(2*f-f*f),e2=e*e,e4=e2*e2,e6=e4*e2;
@@ -448,8 +412,6 @@
 
             function estimarSatelites(total) {
                 if(!total) return {gps:0, glonass:0, galileo:0, beidou:0};
-                const ativos = Object.entries(state.gnssAtivos).filter(([k,v])=>v).map(([k])=>k);
-                if(ativos.length === 0) return {gps:0, glonass:0, galileo:0, beidou:0};
                 const seed = state.sessionSeed;
                 const pesos = {
                     gps: state.gnssAtivos.gps ? (Math.sin(seed)*0.35+0.25) : 0,
@@ -457,35 +419,30 @@
                     galileo: state.gnssAtivos.galileo ? (Math.sin(seed+2)*0.25+0.15) : 0,
                     beidou: state.gnssAtivos.beidou ? 1.0 : 0,
                 };
-                const soma = pesos.gps + pesos.glonass + pesos.galileo + pesos.beidou;
-                if(soma === 0) return {gps:0, glonass:0, galileo:0, beidou:0};
-                const gps = Math.round(total * pesos.gps / soma);
-                const glonass = Math.round(total * pesos.glonass / soma);
-                const galileo = Math.round(total * pesos.galileo / soma);
-                let beidou = total - gps - glonass - galileo;
-                if(beidou < 0) beidou = 0;
-                return {
-                    gps: state.gnssAtivos.gps ? Math.max(0, gps) : 0,
-                    glonass: state.gnssAtivos.glonass ? Math.max(0, glonass) : 0,
-                    galileo: state.gnssAtivos.galileo ? Math.max(0, galileo) : 0,
-                    beidou: state.gnssAtivos.beidou ? Math.max(0, beidou) : 0,
-                };
+                const soma = pesos.gps+pesos.glonass+pesos.galileo+pesos.beidou;
+                if(soma===0) return {gps:0, glonass:0, galileo:0, beidou:0};
+                const gps=Math.round(total*pesos.gps/soma), glonass=Math.round(total*pesos.glonass/soma), galileo=Math.round(total*pesos.galileo/soma);
+                let beidou=total-gps-glonass-galileo; if(beidou<0) beidou=0;
+                return { gps:Math.max(0,gps), glonass:Math.max(0,glonass), galileo:Math.max(0,galileo), beidou:Math.max(0,beidou) };
             }
 
             function atualizarUI() {
                 const precs = state.pontos.map(p=>p.precision);
                 const errMed = precs.length ? precs.reduce((a,b)=>a+b,0)/precs.length : 0;
                 state.erroMedio = errMed;
-                const {area, perimetro} = (state.pontos.length>=3) ? calcularAreaPerimetroUTM() : {area:0,perimetro:0};
+                const {area, perimetro} = state.pontos.length>=3 ? calcularAreaPerimetroUTM() : {area:0,perimetro:0};
                 $('float-area').textContent = area.toFixed(2);
                 $('float-ha').textContent = (area/10000).toFixed(4);
                 $('float-per').textContent = perimetro.toFixed(2);
                 $('float-err').textContent = errMed.toFixed(2);
-                $('data-area').textContent = area.toFixed(2);
-                $('data-ha').textContent = (area/10000).toFixed(4);
-                $('data-per').textContent = perimetro.toFixed(2);
-                $('data-err').textContent = errMed.toFixed(2);
-                $('data-pts').textContent = state.pontos.length;
+                ['data-area','data-ha','data-per','data-err','data-pts'].forEach(id => {
+                    const el = $(id); if(!el) return;
+                    if(id==='data-area') el.textContent = area.toFixed(2);
+                    if(id==='data-ha') el.textContent = (area/10000).toFixed(4);
+                    if(id==='data-per') el.textContent = perimetro.toFixed(2);
+                    if(id==='data-err') el.textContent = errMed.toFixed(2);
+                    if(id==='data-pts') el.textContent = state.pontos.length;
+                });
                 atualizarDropdownsFerramentas();
             }
 
@@ -499,8 +456,7 @@
             }
 
             function atualizarLista() {
-                const c = $('lista-pontos-container');
-                if(!c) return;
+                const c = $('lista-pontos-container'); if(!c) return;
                 c.innerHTML = state.pontos.length ? state.pontos.map((p,i)=>`
                     <div class="point-item" onclick="centralizarPonto(${i})">
                         <span class="idx">#${i+1}</span>
@@ -510,14 +466,12 @@
             }
 
             function atualizarDropdownsFerramentas() {
-                const dropdowns = ['tool-dist-p1', 'tool-dist-p2', 'tool-info-ponto'];
-                dropdowns.forEach(id => {
-                    const sel = $(id);
-                    if (!sel) return;
+                ['tool-dist-p1','tool-dist-p2','tool-info-ponto'].forEach(id => {
+                    const sel = $(id); if(!sel) return;
                     const val = sel.value;
                     sel.innerHTML = '<option value="">Selecione...</option>';
-                    state.pontos.forEach((p, i) => sel.innerHTML += `<option value="${i}">Ponto #${i+1} (${p.lat.toFixed(5)}, ${p.lng.toFixed(5)})</option>`);
-                    if (state.pontos[val]) sel.value = val;
+                    state.pontos.forEach((p,i) => sel.innerHTML += `<option value="${i}">Ponto #${i+1} (${p.lat.toFixed(5)},${p.lng.toFixed(5)})</option>`);
+                    if(state.pontos[val]) sel.value = val;
                 });
             }
 
@@ -526,7 +480,7 @@
                 if(!state.pontos.length) return;
                 const latlngs = state.pontos.map(p=>[p.lat,p.lng]);
                 state.pontos.forEach((p,i)=>{
-                    const mk = L.marker([p.lat,p.lng], { draggable:true, icon: L.divIcon({className:'', html:`<div style="background:var(--primary);color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:10px;border:2px solid #fff;">${i+1}</div>`, iconSize:[22,22], iconAnchor:[11,11]}) }).addTo(polygonGroup);
+                    const mk = L.marker([p.lat,p.lng], { draggable:true, icon: L.divIcon({html:`<div style="background:var(--primary);color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:10px;border:2px solid #fff;">${i+1}</div>`, iconSize:[22,22], iconAnchor:[11,11]}) }).addTo(polygonGroup);
                     mk.on('dragend', e => {
                         const ll = e.target.getLatLng();
                         state.pontos[i].lat = ll.lat; state.pontos[i].lng = ll.lng;
@@ -535,7 +489,7 @@
                         atualizarPoligono(); atualizarUI(); atualizarLista(); salvar();
                     });
                 });
-                if(latlngs.length>=2) L.polyline(latlngs, {color:'#0066cc', weight:3, dashArray: latlngs.length>=3?null:'8,6'}).addTo(polygonGroup);
+                if(latlngs.length>=2) L.polyline(latlngs, {color:'#0066cc', weight:3}).addTo(polygonGroup);
                 if(latlngs.length>=3) L.polygon([...latlngs, latlngs[0]], {color:'#0066cc', fillColor:'#4da6ff', fillOpacity:0.2, weight:3}).addTo(polygonGroup);
                 if(latlngs.length) map.fitBounds(L.latLngBounds(latlngs).pad(0.2));
             }
@@ -544,116 +498,219 @@
                 if(!state.currentPos) { showToast('⏳ Aguardando GNSS','warn'); return; }
                 if(state.currentPos.precision > state.precisionThreshold) { showToast(`Precisão ${state.currentPos.precision.toFixed(1)}m > ${state.precisionThreshold}m`,'warn'); return; }
                 const p = state.currentPos, utm = latLngToUTM(p.lat, p.lng);
-                state.pontos.push({ lat:p.lat, lng:p.lng, alt:p.alt, precision:p.precision, utm_e:utm.easting, utm_n:utm.northing, utm_zonaStr:utm.zonaStr, timestamp:new Date() });
+                state.pontos.push({ lat:p.lat, lng:p.lng, alt:p.alt, precision:p.precision, utm_e:utm.easting, utm_n:utm.northing, utm_zonaStr:utm.zonaStr, timestamp:new Date().toISOString() });
                 atualizarPoligono(); atualizarUI(); atualizarLista(); salvar();
                 showToast(`Ponto #${state.pontos.length} coletado`,'success');
             }
 
             function toggleModoAuto() {
                 state.autoMode = !state.autoMode;
-                const btnAuto = $('btn-auto');
-                if (btnAuto) btnAuto.style.background = state.autoMode ? 'var(--accent)' : 'var(--warning)';
+                const btn = $('btn-auto');
+                if(btn) btn.style.background = state.autoMode ? 'var(--accent)' : 'var(--warning)';
                 if(state.autoMode) {
                     state.lastAutoPos = state.currentPos ? {lat:state.currentPos.lat, lng:state.currentPos.lng} : null;
                     state.autoInterval = setInterval(()=>{ if(state.autoMode && state.autoModeType==='time') verificarAuto(); }, state.autoIntervalSeconds*1000);
                     showToast('🤖 Modo automático ativado','success');
-                } else {
-                    clearInterval(state.autoInterval);
-                    showToast('🤖 Modo automático desativado','warn');
-                }
+                } else { clearInterval(state.autoInterval); showToast('Modo automático desativado','warn'); }
             }
             function verificarAuto() {
                 if(!state.currentPos || state.currentPos.precision > state.precisionThreshold) return;
                 let ok = false;
                 if(state.autoModeType==='time') ok=true;
                 else if(state.autoModeType==='distance' && state.lastAutoPos) {
-                    const d = calcularDist(state.lastAutoPos.lat, state.lastAutoPos.lng, state.currentPos.lat, state.currentPos.lng);
+                    const d = calcDist(state.lastAutoPos.lat, state.lastAutoPos.lng, state.currentPos.lat, state.currentPos.lng);
                     if(d>=2) ok=true;
                 }
                 if(ok) { state.lastAutoPos = {lat:state.currentPos.lat, lng:state.currentPos.lng}; coletarPonto(); }
             }
-            function calcularDist(lat1,lng1,lat2,lng2) {
+            function calcDist(lat1,lng1,lat2,lng2) {
                 const R=6371000, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
-                const a=Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
-                return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R*2*Math.atan2(Math.sqrt(Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2), Math.sqrt(1-Math.sin(dLat/2)**2-Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2));
+            }
+            function calcAzimute(lat1,lng1,lat2,lng2) {
+                const rad=Math.PI/180, dLng=(lng2-lng1)*rad;
+                const y=Math.sin(dLng)*Math.cos(lat2*rad);
+                const x=Math.cos(lat1*rad)*Math.sin(lat2*rad)-Math.sin(lat1*rad)*Math.cos(lat2*rad)*Math.cos(dLng);
+                return ((Math.atan2(y,x)*180/Math.PI)+360)%360;
             }
 
             function limparPontos() {
                 if(!state.pontos.length) return;
-                if(confirm('Tem certeza que deseja limpar todos os pontos?')) {
-                    state.pontos=[];
-                    polygonGroup.clearLayers();
-                    atualizarUI(); atualizarLista(); salvar();
-                    showToast('🗑️ Pontos removidos','warn');
-                }
+                if(confirm('Limpar todos os pontos?')) { state.pontos=[]; polygonGroup.clearLayers(); atualizarUI(); atualizarLista(); salvar(); showToast('Pontos removidos','warn'); }
+            }
+
+            function centralizarUsuario() {
+                if(state.currentPos) {
+                    map.setView([state.currentPos.lat, state.currentPos.lng], 18, {animate:true});
+                    showToast('📍 Centralizado na sua posição','success');
+                } else { showToast('⚠️ Sinal GNSS indisponível','warn'); }
+            }
+
+            function toggleInfoPanel() {
+                const panel = $('map-info-overlay');
+                const btn = $('info-toggle-btn');
+                panel.classList.toggle('collapsed');
+                btn.textContent = panel.classList.contains('collapsed') ? '▸' : '▾';
             }
 
             function calcularDistanciaAzimute() {
-                const i1 = parseInt($('tool-dist-p1').value);
-                const i2 = parseInt($('tool-dist-p2').value);
-                const resultDiv = $('result-dist-azimute');
-                if (isNaN(i1) || isNaN(i2) || i1 === i2) {
-                    resultDiv.style.display = 'block';
-                    resultDiv.innerHTML = '⚠️ Selecione dois pontos distintos.';
-                    return;
-                }
-                const p1 = state.pontos[i1];
-                const p2 = state.pontos[i2];
-                const distH = calcularDist(p1.lat, p1.lng, p2.lat, p2.lng);
-                const distV = (p1.alt != null && p2.alt != null) ? Math.abs(p2.alt - p1.alt) : null;
-                const dist3D = distV != null ? Math.sqrt(distH*distH + distV*distV) : null;
-                const azimute = calcularAzimute(p1.lat, p1.lng, p2.lat, p2.lng);
-                resultDiv.style.display = 'block';
-                resultDiv.innerHTML = `
-                    <strong>Distância horizontal:</strong> ${distH.toFixed(2)} m<br>
-                    ${distV != null ? `<strong>Desnível:</strong> ${distV.toFixed(2)} m<br>` : ''}
-                    ${dist3D != null ? `<strong>Distância 3D:</strong> ${dist3D.toFixed(2)} m<br>` : ''}
-                    <strong>Azimute (P1→P2):</strong> ${azimute.toFixed(2)}°`;
-            }
-
-            function calcularAzimute(lat1, lng1, lat2, lng2) {
-                const rad = Math.PI / 180;
-                const dLng = (lng2 - lng1) * rad;
-                const y = Math.sin(dLng) * Math.cos(lat2 * rad);
-                const x = Math.cos(lat1 * rad) * Math.sin(lat2 * rad) - Math.sin(lat1 * rad) * Math.cos(lat2 * rad) * Math.cos(dLng);
-                let az = Math.atan2(y, x) * 180 / Math.PI;
-                return (az + 360) % 360;
+                const i1=parseInt($('tool-dist-p1').value), i2=parseInt($('tool-dist-p2').value);
+                const r=$('result-dist-azimute');
+                if(isNaN(i1)||isNaN(i2)||i1===i2) { r.style.display='block'; r.innerHTML='Selecione dois pontos distintos.'; return; }
+                const p1=state.pontos[i1], p2=state.pontos[i2];
+                const dH=calcDist(p1.lat,p1.lng,p2.lat,p2.lng);
+                const dV=(p1.alt!=null&&p2.alt!=null)?Math.abs(p2.alt-p1.alt):null;
+                const d3D=dV!=null?Math.sqrt(dH*dH+dV*dV):null;
+                const az=calcAzimute(p1.lat,p1.lng,p2.lat,p2.lng);
+                r.style.display='block';
+                r.innerHTML=`<strong>Dist. horizontal:</strong> ${dH.toFixed(2)} m<br>${dV!=null?`<strong>Desnível:</strong> ${dV.toFixed(2)} m<br>`:''}${d3D!=null?`<strong>Dist. 3D:</strong> ${d3D.toFixed(2)} m<br>`:''}<strong>Azimute (P1→P2):</strong> ${az.toFixed(2)}°`;
             }
 
             function adicionarPontoManual() {
-                const lat = parseFloat($('tool-add-lat').value);
-                const lng = parseFloat($('tool-add-lng').value);
-                const alt = parseFloat($('tool-add-alt').value) || null;
-                if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-                    showToast('⚠️ Coordenadas inválidas','error');
-                    return;
-                }
-                const utm = latLngToUTM(lat, lng);
-                state.pontos.push({ lat, lng, alt, precision: 0.5, utm_e: utm.easting, utm_n: utm.northing, utm_zonaStr: utm.zonaStr, timestamp: new Date() });
+                const lat=parseFloat($('tool-add-lat').value), lng=parseFloat($('tool-add-lng').value), alt=parseFloat($('tool-add-alt').value)||null;
+                if(isNaN(lat)||isNaN(lng)||lat<-90||lat>90||lng<-180||lng>180) { showToast('Coordenadas inválidas','error'); return; }
+                const utm=latLngToUTM(lat,lng);
+                state.pontos.push({lat,lng,alt,precision:0.5,utm_e:utm.easting,utm_n:utm.northing,utm_zonaStr:utm.zonaStr,timestamp:new Date().toISOString()});
                 atualizarPoligono(); atualizarUI(); atualizarLista(); salvar();
-                $('tool-add-lat').value = ''; $('tool-add-lng').value = ''; $('tool-add-alt').value = '';
-                showToast(`📍 Ponto #${state.pontos.length} adicionado`,'success');
+                $('tool-add-lat').value=''; $('tool-add-lng').value=''; $('tool-add-alt').value='';
+                showToast(`Ponto #${state.pontos.length} adicionado`,'success');
             }
 
             function exibirInfoPonto() {
-                const i = parseInt($('tool-info-ponto').value);
-                const resultDiv = $('result-info-ponto');
-                if (isNaN(i)) { resultDiv.style.display = 'none'; return; }
-                const p = state.pontos[i];
-                resultDiv.style.display = 'block';
-                resultDiv.innerHTML = `
-                    <strong>Ponto #${i+1}</strong><br>
-                    <strong>Lat:</strong> ${p.lat.toFixed(7)}°<br>
-                    <strong>Lng:</strong> ${p.lng.toFixed(7)}°<br>
-                    <strong>UTM:</strong> ${p.utm_zonaStr} E:${p.utm_e.toFixed(2)} N:${p.utm_n.toFixed(2)}<br>
-                    <strong>Alt:</strong> ${p.alt != null ? p.alt.toFixed(2)+' m' : 'N/D'}<br>
-                    <strong>Prec:</strong> ${p.precision.toFixed(1)} m<br>
-                    <strong>Data:</strong> ${new Date(p.timestamp).toLocaleString('pt-BR')}`;
+                const i=parseInt($('tool-info-ponto').value), r=$('result-info-ponto');
+                if(isNaN(i)){r.style.display='none';return;}
+                const p=state.pontos[i]; r.style.display='block';
+                r.innerHTML=`<strong>Ponto #${i+1}</strong><br>Lat: ${p.lat.toFixed(7)}°<br>Lng: ${p.lng.toFixed(7)}°<br>UTM: ${p.utm_zonaStr} E:${p.utm_e.toFixed(2)} N:${p.utm_n.toFixed(2)}<br>Alt: ${p.alt!=null?p.alt.toFixed(2)+' m':'N/D'}<br>Prec: ${p.precision.toFixed(1)} m<br>Data: ${new Date(p.timestamp).toLocaleString('pt-BR')}`;
             }
 
-            function salvar() { try{ localStorage.setItem('geoarea_v4', JSON.stringify({pontos:state.pontos, projeto:state.projetoNome, dark:state.darkMode, precision:state.precisionThreshold, datum:state.datum, autoType:state.autoModeType, autoInt:state.autoIntervalSeconds, gnssAtivos:state.gnssAtivos})); }catch(e){} }
+            // ═══════════ EXPORTAÇÃO ═══════════
+            function exportarKML() {
+                if(state.pontos.length<3) { showToast('Mínimo 3 pontos','warn'); return; }
+                let kml=`<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n<name>${state.projetoNome}</name>\n<Placemark>\n<name>${state.projetoNome}</name>\n<Polygon>\n<outerBoundaryIs>\n<LinearRing>\n<coordinates>\n`;
+                state.pontos.forEach(p=>{ kml+=`${p.lng},${p.lat},${p.alt||0}\n`; });
+                kml+=`${state.pontos[0].lng},${state.pontos[0].lat},${state.pontos[0].alt||0}\n</coordinates>\n</LinearRing>\n</outerBoundaryIs>\n</Polygon>\n</Placemark>\n</Document>\n</kml>`;
+                download(kml, state.projetoNome+'.kml', 'application/vnd.google-earth.kml+xml');
+                showToast('KML exportado!','success');
+            }
+
+            function exportarCSV() {
+                if(!state.pontos.length) { showToast('Sem pontos','warn'); return; }
+                let csv='ID,Latitude,Longitude,Altitude,Precisao(m),UTM_E,UTM_N,UTM_Zona,Timestamp\n';
+                state.pontos.forEach((p,i)=>csv+=`${i+1},${p.lat},${p.lng},${p.alt||''},${p.precision},${p.utm_e},${p.utm_n},${p.utm_zonaStr},${p.timestamp}\n`);
+                const {area,perimetro}=calcularAreaPerimetroUTM();
+                csv+=`\nÁrea (m²),${area.toFixed(2)}\nHectares,${(area/10000).toFixed(4)}\nPerímetro (m),${perimetro.toFixed(2)}\nErro Médio (m),${state.erroMedio.toFixed(2)}`;
+                download(csv, state.projetoNome+'.csv', 'text/csv');
+                showToast('CSV exportado!','success');
+            }
+
+            function exportarGeoJSON() {
+                if(state.pontos.length<3) { showToast('Mínimo 3 pontos','warn'); return; }
+                const coords=state.pontos.map(p=>[p.lng,p.lat]); coords.push(coords[0]);
+                const gj={type:'FeatureCollection',features:[{type:'Feature',properties:{nome:state.projetoNome,area_m2:calcularAreaPerimetroUTM().area,erro_medio:state.erroMedio,datum:state.datum},geometry:{type:'Polygon',coordinates:[coords]}}]};
+                download(JSON.stringify(gj,null,2), state.projetoNome+'.geojson', 'application/geo+json');
+                showToast('GeoJSON exportado!','success');
+            }
+
+            function download(content, filename, mime) {
+                const blob=new Blob([content],{type:mime}), a=document.createElement('a');
+                a.href=URL.createObjectURL(blob); a.download=filename; a.click(); URL.revokeObjectURL(a.href);
+            }
+
+            function compartilhar() {
+                if(state.pontos.length<3) { showToast('Mínimo 3 pontos','warn'); return; }
+                const {area}=calcularAreaPerimetroUTM();
+                const texto=`GeoÁrea GNSS\nÁrea: ${area.toFixed(2)} m² (${(area/10000).toFixed(4)} ha)\nVértices: ${state.pontos.length}\nErro médio: ${state.erroMedio.toFixed(2)} m`;
+                if(navigator.share) navigator.share({text:texto}).catch(()=>{});
+                else { navigator.clipboard.writeText(texto); showToast('Copiado para área de transferência','success'); }
+            }
+
+            function abrirRelatorio() {
+                const {area,perimetro}=calcularAreaPerimetroUTM();
+                const precs=state.pontos.map(p=>p.precision);
+                const precMedia=precs.length?precs.reduce((a,b)=>a+b,0)/precs.length:0;
+                const precMin=precs.length?Math.min(...precs):0;
+                let html=`<h3>Relatório Técnico</h3><p><b>Projeto:</b> ${state.projetoNome}</p><p><b>Data:</b> ${new Date().toLocaleString('pt-BR')}</p><p><b>Datum:</b> ${state.datum}</p><p><b>GNSS:</b> GPS:${state.satelitesPorSistema.gps} GLONASS:${state.satelitesPorSistema.glonass} Galileo:${state.satelitesPorSistema.galileo} BeiDou:${state.satelitesPorSistema.beidou}</p><p><b>Precisão média:</b> ${precMedia.toFixed(2)} m</p><p><b>Precisão mínima:</b> ${precMin.toFixed(2)} m</p><p><b>Erro médio:</b> ${state.erroMedio.toFixed(2)} m</p><p><b>Vértices:</b> ${state.pontos.length}</p><p><b>Área:</b> ${area.toFixed(2)} m² | ${(area/10000).toFixed(4)} ha</p><p><b>Perímetro:</b> ${perimetro.toFixed(2)} m</p><hr><p><b>Vértices:</b></p><table style="width:100%;font-size:9px;border-collapse:collapse;">`;
+                html+='<tr><th>#</th><th>Lat</th><th>Lng</th><th>UTM</th><th>Prec</th></tr>';
+                state.pontos.forEach((p,i)=>html+=`<tr><td>${i+1}</td><td>${p.lat.toFixed(7)}</td><td>${p.lng.toFixed(7)}</td><td>${p.utm_zonaStr} ${p.utm_e.toFixed(1)} ${p.utm_n.toFixed(1)}</td><td>${p.precision.toFixed(1)}m</td></tr>`);
+                html+='</table>';
+                $('relatorio-content').innerHTML=html;
+                $('tab-relatorio').style.display='block';
+            }
+
+            function baixarRelatorio() {
+                const html=$('relatorio-content').innerHTML;
+                const full=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório</title><style>body{font-family:sans-serif;max-width:700px;margin:20px auto;padding:20px;line-height:1.6}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:4px;text-align:center}th{background:#f0f0f0}</style></head><body>${html}</body></html>`;
+                download(full, 'Relatorio_'+state.projetoNome+'.html', 'text/html');
+                showToast('Relatório baixado!','success');
+            }
+
+            function abrirImportar() { $('file-import').click(); }
+
+            function importarArquivo(event) {
+                const file=event.target.files[0]; if(!file) return;
+                const reader=new FileReader();
+                reader.onload=function(e){
+                    try {
+                        const content=e.target.result;
+                        if(file.name.endsWith('.geojson')||file.name.endsWith('.json')) importarGeoJSON(JSON.parse(content));
+                        else if(file.name.endsWith('.kml')) importarKML(content);
+                        else if(file.name.endsWith('.csv')) importarCSV(content);
+                        else showToast('Formato não reconhecido','error');
+                    } catch(ex) { showToast('Erro ao ler arquivo: '+ex.message,'error'); }
+                };
+                reader.readAsText(file);
+                event.target.value='';
+            }
+
+            function importarGeoJSON(gj) {
+                const feats=gj.features||[gj];
+                const coords=feats[0]?.geometry?.coordinates?.[0]||feats[0]?.coordinates?.[0]||[];
+                if(coords.length<3) { showToast('GeoJSON inválido','error'); return; }
+                state.pontos=coords.slice(0,-1).map((c,i)=>{
+                    const utm=latLngToUTM(c[1],c[0]);
+                    return {lat:c[1],lng:c[0],alt:c[2]||null,precision:1.0,utm_e:utm.easting,utm_n:utm.northing,utm_zonaStr:utm.zonaStr,timestamp:new Date().toISOString()};
+                });
+                finalizarImportacao();
+            }
+
+            function importarKML(content) {
+                const parser=new DOMParser();
+                const doc=parser.parseFromString(content,'text/xml');
+                const coordText=doc.querySelector('coordinates')?.textContent?.trim();
+                if(!coordText) { showToast('KML sem coordenadas','error'); return; }
+                const coords=coordText.split(/\s+/).filter(c=>c.includes(',')).map(c=>{const p=c.split(','); return {lng:parseFloat(p[0]),lat:parseFloat(p[1]),alt:parseFloat(p[2])||null};});
+                if(coords.length<3) { showToast('KML inválido','error'); return; }
+                state.pontos=coords.slice(0,-1).map((c,i)=>{
+                    const utm=latLngToUTM(c.lat,c.lng);
+                    return {lat:c.lat,lng:c.lng,alt:c.alt,precision:1.0,utm_e:utm.easting,utm_n:utm.northing,utm_zonaStr:utm.zonaStr,timestamp:new Date().toISOString()};
+                });
+                finalizarImportacao();
+            }
+
+            function importarCSV(content) {
+                const lines=content.split('\n').filter(l=>l.trim()&&!l.startsWith('Área')&&!l.startsWith('Hectares')&&!l.startsWith('Perímetro')&&!l.startsWith('ID,'));
+                const pts=[];
+                for(const line of lines) {
+                    const cols=line.split(',');
+                    if(cols.length>=2&&!isNaN(parseFloat(cols[1]))&&!isNaN(parseFloat(cols[2]))) {
+                        const lat=parseFloat(cols[1]),lng=parseFloat(cols[2]),utm=latLngToUTM(lat,lng);
+                        pts.push({lat,lng,alt:cols[3]?parseFloat(cols[3]):null,precision:cols[4]?parseFloat(cols[4]):1.0,utm_e:utm.easting,utm_n:utm.northing,utm_zonaStr:utm.zonaStr,timestamp:new Date().toISOString()});
+                    }
+                }
+                if(pts.length<3) { showToast('CSV sem dados suficientes','error'); return; }
+                state.pontos=pts;
+                finalizarImportacao();
+            }
+
+            function finalizarImportacao() {
+                state.erroMedio=state.pontos.length?state.pontos.reduce((a,b)=>a+b.precision,0)/state.pontos.length:0;
+                atualizarPoligono(); atualizarUI(); atualizarLista(); salvar();
+                showToast(`${state.pontos.length} pontos importados!`,'success');
+            }
+
+            function salvar() { try{ localStorage.setItem('geoarea_v5', JSON.stringify({pontos:state.pontos, projeto:state.projetoNome, dark:state.darkMode, precision:state.precisionThreshold, datum:state.datum, autoType:state.autoModeType, autoInt:state.autoIntervalSeconds, gnssAtivos:state.gnssAtivos})); }catch(e){} }
             function carregar() {
-                const d=JSON.parse(localStorage.getItem('geoarea_v4')||'{}');
+                const d=JSON.parse(localStorage.getItem('geoarea_v5')||'{}');
                 if(d.pontos) state.pontos=d.pontos;
                 state.projetoNome=d.projeto||'Área sem nome';
                 state.darkMode=d.dark||false;
@@ -661,51 +718,35 @@
                 state.precisionThreshold=d.precision||5.0;
                 state.autoModeType=d.autoType||'time';
                 state.autoIntervalSeconds=d.autoInt||5;
-                state.gnssAtivos = d.gnssAtivos || { gps: true, glonass: true, galileo: true, beidou: true };
-                $('config-precision-threshold').value=state.precisionThreshold;
-                $('config-auto-mode').value=state.autoModeType;
-                $('config-auto-interval').value=state.autoIntervalSeconds;
-                $('config-datum').value=state.datum;
-                $('gnss-gps').checked = state.gnssAtivos.gps;
-                $('gnss-glonass').checked = state.gnssAtivos.glonass;
-                $('gnss-galileo').checked = state.gnssAtivos.galileo;
-                $('gnss-beidou').checked = state.gnssAtivos.beidou;
+                state.gnssAtivos=d.gnssAtivos||{gps:true,glonass:true,galileo:true,beidou:true};
+                ['config-precision-threshold','config-auto-mode','config-auto-interval','config-datum'].forEach(id=>{if($(id))$(id).value=state[id==='config-precision-threshold'?'precisionThreshold':id==='config-auto-mode'?'autoModeType':id==='config-auto-interval'?'autoIntervalSeconds':'datum'];});
+                ['gnss-gps','gnss-glonass','gnss-galileo','gnss-beidou'].forEach(id=>{const k=id.replace('gnss-',''); if($(id))$(id).checked=state.gnssAtivos[k];});
                 aplicarVisibilidadeGNSS();
                 atualizarPoligono(); atualizarUI(); atualizarLista();
             }
 
             function salvarConfigGNSS() {
-                state.gnssAtivos.gps = $('gnss-gps').checked;
-                state.gnssAtivos.glonass = $('gnss-glonass').checked;
-                state.gnssAtivos.galileo = $('gnss-galileo').checked;
-                state.gnssAtivos.beidou = $('gnss-beidou').checked;
-                aplicarVisibilidadeGNSS(); salvar();
-                showToast('🛰️ Sistemas GNSS atualizados','success');
+                state.gnssAtivos.gps=$('gnss-gps').checked; state.gnssAtivos.glonass=$('gnss-glonass').checked;
+                state.gnssAtivos.galileo=$('gnss-galileo').checked; state.gnssAtivos.beidou=$('gnss-beidou').checked;
+                aplicarVisibilidadeGNSS(); salvar(); showToast('Sistemas GNSS atualizados','success');
             }
             function aplicarVisibilidadeGNSS() {
-                $('gps-icon').style.display = state.gnssAtivos.gps ? 'inline' : 'none';
-                $('glonass-icon').style.display = state.gnssAtivos.glonass ? 'inline' : 'none';
-                $('galileo-icon').style.display = state.gnssAtivos.galileo ? 'inline' : 'none';
-                $('beidou-icon').style.display = state.gnssAtivos.beidou ? 'inline' : 'none';
-                if(state.currentPos && state.satelliteCount) {
-                    state.satelitesPorSistema = estimarSatelites(state.satelliteCount);
-                    atualizarStatus();
-                }
+                ['gps','glonass','galileo','beidou'].forEach(s=>{ const el=$(s+'-icon'); if(el)el.style.display=state.gnssAtivos[s]?'inline':'none'; });
+                if(state.currentPos&&state.satelliteCount) { state.satelitesPorSistema=estimarSatelites(state.satelliteCount); atualizarStatus(); }
             }
 
-            function salvarConfigAutoMode() { state.autoModeType = $('config-auto-mode').value; salvar(); }
-            function salvarConfigAutoInterval() { state.autoIntervalSeconds = parseInt($('config-auto-interval').value)||5; salvar(); }
-            function salvarConfigPrecision() { state.precisionThreshold = parseFloat($('config-precision-threshold').value)||5.0; salvar(); }
-            function atualizarDatum() { state.datum = $('config-datum').value; salvar(); }
+            function salvarConfigAutoMode() { state.autoModeType=$('config-auto-mode').value; salvar(); }
+            function salvarConfigAutoInterval() { state.autoIntervalSeconds=parseInt($('config-auto-interval').value)||5; salvar(); }
+            function salvarConfigPrecision() { state.precisionThreshold=parseFloat($('config-precision-threshold').value)||5.0; salvar(); }
+            function atualizarDatum() { state.datum=$('config-datum').value; salvar(); }
 
             function iniciarGeo() {
                 if(!navigator.geolocation) return;
                 navigator.geolocation.watchPosition(pos=>{
                     const c=pos.coords;
-                    state.currentPos={ lat:c.latitude, lng:c.longitude, alt:c.altitude, precision:c.accuracy, timestamp:new Date() };
-                    const total=pos.satellites||c.satellites||0;
-                    state.satelliteCount = total;
-                    state.satelitesPorSistema = estimarSatelites(total);
+                    state.currentPos={lat:c.latitude,lng:c.longitude,alt:c.altitude,precision:c.accuracy,timestamp:new Date()};
+                    state.satelliteCount=pos.satellites||c.satellites||0;
+                    state.satelitesPorSistema=estimarSatelites(state.satelliteCount);
                     atualizarStatus();
                 }, err=>{ if(err.code===1) showToast('Permissão negada!','error'); }, {enableHighAccuracy:true});
             }
@@ -713,24 +754,22 @@
             function atualizarStatus() {
                 if(!state.currentPos) return;
                 const p=state.currentPos;
-                $('val-precision').textContent = p.precision.toFixed(1)+'m';
-                $('dot-precision').className = 'status-dot '+(p.precision<5?'dot-green':p.precision<10?'dot-yellow':'dot-red');
-                $('val-latlon').textContent = p.lat.toFixed(6)+','+p.lng.toFixed(6);
-                $('val-alt').textContent = p.alt?p.alt.toFixed(1)+'m':'--';
-                const utm = latLngToUTM(p.lat,p.lng);
-                $('val-utm').textContent = utm.zonaStr+' '+utm.easting.toFixed(1)+' '+utm.northing.toFixed(1);
-                $('val-gps').textContent = state.satelitesPorSistema.gps;
-                $('val-glonass').textContent = state.satelitesPorSistema.glonass;
-                $('val-galileo').textContent = state.satelitesPorSistema.galileo;
-                $('val-beidou').textContent = state.satelitesPorSistema.beidou;
+                $('val-precision').textContent=p.precision.toFixed(1)+'m';
+                $('dot-precision').className='status-dot '+(p.precision<5?'dot-green':p.precision<10?'dot-yellow':'dot-red');
+                $('val-latlon').textContent=p.lat.toFixed(6)+','+p.lng.toFixed(6);
+                $('val-alt').textContent=p.alt?p.alt.toFixed(1)+'m':'--';
+                const utm=latLngToUTM(p.lat,p.lng);
+                $('val-utm').textContent=utm.zonaStr+' '+utm.easting.toFixed(1)+' '+utm.northing.toFixed(1);
+                ['gps','glonass','galileo','beidou'].forEach(s=>{ const el=$('val-'+s); if(el)el.textContent=state.satelitesPorSistema[s]; });
             }
 
             document.querySelectorAll('.nav-tab').forEach(btn => {
                 btn.addEventListener('click', ()=>{
                     document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
                     btn.classList.add('active');
-                    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('open'));
-                    const tab = btn.dataset.tab;
+                    document.querySelectorAll('.tab-panel').forEach(p=>{if(p.id!=='tab-relatorio')p.classList.remove('open');});
+                    $('tab-relatorio').style.display='none';
+                    const tab=btn.dataset.tab;
                     if(tab==='dados') { $('tab-dados').classList.add('open'); atualizarLista(); }
                     else if(tab==='exportar') $('tab-exportar').classList.add('open');
                     else if(tab==='config') $('tab-config').classList.add('open');
@@ -738,61 +777,41 @@
                 });
             });
 
-            window.coletarPonto = coletarPonto;
-            window.toggleModoAuto = toggleModoAuto;
-            window.limparPontos = limparPontos;
-            window.centralizarPonto = (i) => { if(state.pontos[i]) map.setView([state.pontos[i].lat, state.pontos[i].lng], 19); };
-            window.deletarPonto = (i) => { state.pontos.splice(i,1); atualizarPoligono(); atualizarUI(); atualizarLista(); salvar(); };
-            window.calcularDistanciaAzimute = calcularDistanciaAzimute;
-            window.adicionarPontoManual = adicionarPontoManual;
-            window.exibirInfoPonto = exibirInfoPonto;
-            window.abrirModal = (id) => { $(id).style.display='flex'; };
-            window.fecharModal = (id) => { $(id).style.display='none'; };
-            window.salvarProjeto = () => {
-                const nome = $('input-projeto-nome').value.trim();
-                if(!nome) return;
-                state.projetoNome = nome;
-                const projetos = JSON.parse(localStorage.getItem('geoarea_projetos_v4')||'{}');
-                projetos[nome] = {pontos:state.pontos, datum:state.datum};
-                localStorage.setItem('geoarea_projetos_v4', JSON.stringify(projetos));
-                fecharModal('modal-projeto');
-                showToast('Projeto salvo!','success');
+            window.coletarPonto=coletarPonto; window.toggleModoAuto=toggleModoAuto; window.limparPontos=limparPontos;
+            window.centralizarPonto=(i)=>{if(state.pontos[i])map.setView([state.pontos[i].lat,state.pontos[i].lng],19);};
+            window.deletarPonto=(i)=>{state.pontos.splice(i,1);atualizarPoligono();atualizarUI();atualizarLista();salvar();};
+            window.calcularDistanciaAzimute=calcularDistanciaAzimute; window.adicionarPontoManual=adicionarPontoManual;
+            window.exibirInfoPonto=exibirInfoPonto; window.centralizarUsuario=centralizarUsuario;
+            window.toggleInfoPanel=toggleInfoPanel;
+            window.exportarKML=exportarKML; window.exportarCSV=exportarCSV; window.exportarGeoJSON=exportarGeoJSON;
+            window.compartilhar=compartilhar; window.abrirRelatorio=abrirRelatorio; window.baixarRelatorio=baixarRelatorio;
+            window.abrirImportar=abrirImportar; window.importarArquivo=importarArquivo;
+            window.abrirModal=(id)=>{$(id).style.display='flex';}; window.fecharModal=(id)=>{$(id).style.display='none';};
+            window.salvarProjeto=()=>{
+                const nome=$('input-projeto-nome').value.trim(); if(!nome) return;
+                state.projetoNome=nome;
+                const projetos=JSON.parse(localStorage.getItem('geoarea_projetos_v5')||'{}');
+                projetos[nome]={pontos:state.pontos,datum:state.datum};
+                localStorage.setItem('geoarea_projetos_v5',JSON.stringify(projetos));
+                fecharModal('modal-projeto'); showToast('Projeto salvo!','success');
             };
-            window.abrirGerenciarProjetos = () => {
-                const projetos = JSON.parse(localStorage.getItem('geoarea_projetos_v4')||'{}');
-                const lista = $('lista-projetos');
-                lista.innerHTML = Object.keys(projetos).map(n=>`<div class="point-item" onclick="carregarProjeto('${n}')">📁 ${n} (${projetos[n].pontos.length} pts)</div>`).join('') || 'Nenhum projeto.';
+            window.abrirGerenciarProjetos=()=>{
+                const projetos=JSON.parse(localStorage.getItem('geoarea_projetos_v5')||'{}');
+                const lista=$('lista-projetos');
+                lista.innerHTML=Object.keys(projetos).map(n=>`<div class="point-item" onclick="carregarProjeto('${n}')">📁 ${n} (${projetos[n].pontos.length} pts)</div>`).join('')||'Nenhum projeto.';
                 abrirModal('modal-gerenciar');
             };
-            window.carregarProjeto = (nome) => {
-                const projetos = JSON.parse(localStorage.getItem('geoarea_projetos_v4')||'{}');
-                if(projetos[nome]) {
-                    state.pontos = projetos[nome].pontos;
-                    state.projetoNome = nome;
-                    atualizarPoligono(); atualizarUI(); atualizarLista(); salvar();
-                    fecharModal('modal-gerenciar');
-                    showToast(`Projeto ${nome} carregado`,'success');
-                }
+            window.carregarProjeto=(nome)=>{
+                const projetos=JSON.parse(localStorage.getItem('geoarea_projetos_v5')||'{}');
+                if(projetos[nome]) { state.pontos=projetos[nome].pontos; state.projetoNome=nome; atualizarPoligono(); atualizarUI(); atualizarLista(); salvar(); fecharModal('modal-gerenciar'); showToast(`Projeto ${nome} carregado`,'success'); }
             };
-            window.exportarKML = () => { showToast('Exportação KML em breve','warn'); };
-            window.exportarCSV = () => { showToast('Exportação CSV em breve','warn'); };
-            window.exportarGeoJSON = () => { showToast('Exportação GeoJSON em breve','warn'); };
-            window.compartilhar = () => { showToast('Compartilhamento em breve','warn'); };
-            window.abrirRelatorio = () => { showToast('Relatório em breve','warn'); };
-            window.abrirImportar = () => { showToast('Importação em breve','warn'); };
-            window.toggleDarkMode = () => { state.darkMode=!state.darkMode; document.body.classList.toggle('dark-mode'); salvar(); };
-            window.atualizarDatum = atualizarDatum;
-            window.salvarConfigGNSS = salvarConfigGNSS;
-            window.salvarConfigAutoMode = salvarConfigAutoMode;
-            window.salvarConfigAutoInterval = salvarConfigAutoInterval;
-            window.salvarConfigPrecision = salvarConfigPrecision;
+            window.toggleDarkMode=()=>{state.darkMode=!state.darkMode;document.body.classList.toggle('dark-mode');salvar();};
+            window.atualizarDatum=atualizarDatum; window.salvarConfigGNSS=salvarConfigGNSS;
+            window.salvarConfigAutoMode=salvarConfigAutoMode; window.salvarConfigAutoInterval=salvarConfigAutoInterval;
+            window.salvarConfigPrecision=salvarConfigPrecision;
 
             init();
-            function init() {
-                carregar();
-                iniciarGeo();
-                atualizarUI();
-            }
+            function init() { carregar(); iniciarGeo(); atualizarUI(); }
         })();
     </script>
 </body>
