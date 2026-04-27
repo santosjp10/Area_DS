@@ -7,171 +7,100 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
-            --bg: #f5f5f0;
-            --surface: #ffffff;
-            --surface2: #e8e8e0;
-            --text: #1a1a1a;
-            --text2: #555;
-            --primary: #0066cc;
-            --primary-light: #e0f0ff;
-            --accent: #ff6d00;
-            --success: #2e7d32;
-            --warning: #e6a700;
-            --danger: #c62828;
-            --border: #d0d0c8;
-            --radius: 14px;
-            --radius-sm: 8px;
-            --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            --status-h: 48px;
-            --bottom-nav-h: 56px;
+            --bg: #f5f5f0; --surface: #ffffff; --surface2: #e8e8e0; --text: #1a1a1a; --text2: #555;
+            --primary: #0066cc; --primary-light: #e0f0ff; --accent: #ff6d00; --success: #2e7d32;
+            --warning: #e6a700; --danger: #c62828; --border: #d0d0c8; --radius: 14px; --radius-sm: 8px;
+            --font: 'Segoe UI', system-ui, -apple-system, sans-serif; --status-h: 48px; --bottom-nav-h: 56px;
         }
         .dark-mode {
-            --bg: #1a1a1e;
-            --surface: #252528;
-            --surface2: #2e2e32;
-            --text: #e8e8e4;
-            --text2: #b0b0a8;
-            --primary: #4da6ff;
-            --primary-light: #1a3350;
-            --accent: #ff9940;
-            --success: #4caf50;
-            --warning: #ffc107;
-            --danger: #ef5350;
-            --border: #3a3a3e;
+            --bg: #1a1a1e; --surface: #252528; --surface2: #2e2e32; --text: #e8e8e4; --text2: #b0b0a8;
+            --primary: #4da6ff; --primary-light: #1a3350; --accent: #ff9940; --success: #4caf50;
+            --warning: #ffc107; --danger: #ef5350; --border: #3a3a3e;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100%; width: 100%; overflow: hidden; font-family: var(--font); background: var(--bg); color: var(--text); transition: background 0.25s, color 0.25s; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
 
-        #status-bar {
-            position: fixed; top: 0; left: 0; right: 0; z-index: 2000; background: var(--surface); border-bottom: 1px solid var(--border); padding: 4px 8px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; min-height: var(--status-h); box-shadow: 0 1px 8px rgba(0,0,0,0.08); font-size: 10px; transition: background 0.25s;
-        }
+        #status-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 2000; background: var(--surface); border-bottom: 1px solid var(--border); padding: 4px 8px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; min-height: var(--status-h); box-shadow: 0 1px 8px rgba(0,0,0,0.08); font-size: 10px; transition: background 0.25s; }
         .status-item { display: flex; align-items: center; gap: 2px; font-weight: 600; padding: 2px 6px; border-radius: 20px; background: var(--surface2); white-space: nowrap; font-size: 9px; }
         .status-dot { width: 6px; height: 6px; border-radius: 50%; }
-        .dot-green { background: var(--success); box-shadow: 0 0 6px var(--success); }
-        .dot-yellow { background: var(--warning); }
-        .dot-red { background: var(--danger); }
+        .dot-green { background: var(--success); box-shadow: 0 0 6px var(--success); } .dot-yellow { background: var(--warning); } .dot-red { background: var(--danger); }
         .gnss-icons span { margin: 0 1px; font-weight: 700; }
 
-        #map-container {
-            position: fixed; top: var(--status-h); left: 0; right: 0; bottom: var(--bottom-nav-h); z-index: 10; background: #d4e0e8;
-        }
+        #map-container { position: fixed; top: var(--status-h); left: 0; right: 0; bottom: var(--bottom-nav-h); z-index: 10; background: #d4e0e8; }
         #map { width: 100%; height: 100%; }
 
-        .leaflet-control-zoom {
-            top: 10px !important;
-            right: 10px !important;
-            left: auto !important;
-            z-index: 800 !important;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-        .leaflet-control-zoom a {
-            width: 36px !important;
-            height: 36px !important;
-            line-height: 36px !important;
-            font-size: 18px !important;
-        }
+        .leaflet-control-zoom { top: 10px !important; right: 10px !important; left: auto !important; z-index: 800 !important; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .leaflet-control-zoom a { width: 36px !important; height: 36px !important; line-height: 36px !important; font-size: 18px !important; }
 
-        .map-floating {
-            position: absolute; z-index: 500; background: var(--surface); border-radius: var(--radius); padding: 8px 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); backdrop-filter: blur(6px); transition: all 0.25s; font-size: 10px;
-        }
+        .map-floating { position: absolute; z-index: 500; background: var(--surface); border-radius: var(--radius); padding: 8px 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); backdrop-filter: blur(6px); transition: all 0.25s; font-size: 10px; }
         .map-floating.info {
-            top: 10px; left: 10px; max-width: calc(100% - 60px); min-width: 150px; display: flex; flex-direction: column; gap: 4px;
+            top: 10px; left: 50%; transform: translateX(-50%);
+            max-width: calc(100% - 20px); min-width: 200px;
+            display: flex; flex-direction: column; gap: 4px;
+            z-index: 600;
         }
-        .map-floating.info .info-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px;
-        }
-        .map-floating.info .info-item { display: flex; align-items: baseline; gap: 3px; }
+        .map-floating.info .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+        .map-floating.info .info-item { display: flex; align-items: baseline; gap: 3px; justify-content: center; }
         .map-floating.info .val { font-weight: 800; font-size: 13px; color: var(--primary); white-space: nowrap; }
         .map-floating.info .lbl { font-size: 7px; text-transform: uppercase; color: var(--text2); }
-        .map-floating.info .info-toggle {
-            position: absolute; top: 2px; right: 6px; background: none; border: none; font-size: 12px; cursor: pointer; color: var(--text2); padding: 2px 4px; border-radius: 4px;
-        }
+        .map-floating.info .info-toggle { position: absolute; top: 4px; right: 8px; background: none; border: none; font-size: 12px; cursor: pointer; color: var(--text2); padding: 2px 4px; border-radius: 4px; }
         .map-floating.info.collapsed .info-grid { display: none; }
-        .map-floating.info.collapsed { padding: 6px 10px; }
+        .map-floating.info.collapsed { padding: 6px 12px; min-width: auto; }
         .map-floating.actions { bottom: 20px; right: 16px; flex-direction: row; gap: 10px; padding: 8px; display: flex; }
         .map-floating.center-btn { bottom: 20px; left: 16px; padding: 8px; }
 
-        .fab {
-            width: 48px; height: 48px; border-radius: 50%; background: var(--success); color: #fff; border: none; font-size: 22px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;
-        }
-        .fab.auto { background: var(--warning); color: #1a1a1a; }
-        .fab.clear { background: var(--danger); }
-        .fab.center { background: var(--primary); font-size: 20px; }
+        .fab { width: 48px; height: 48px; border-radius: 50%; background: var(--success); color: #fff; border: none; font-size: 22px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .fab.auto { background: var(--warning); color: #1a1a1a; } .fab.clear { background: var(--danger); } .fab.center { background: var(--primary); font-size: 20px; }
 
-        #bottom-nav {
-            position: fixed; bottom: 0; left: 0; right: 0; height: var(--bottom-nav-h); background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 2000; box-shadow: 0 -2px 8px rgba(0,0,0,0.05); padding-bottom: env(safe-area-inset-bottom); overflow-x: auto;
-        }
-        .nav-tab {
-            flex: 1 0 auto; min-width: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 9px; font-weight: 600; color: var(--text2); background: none; border: none; padding: 4px 2px; cursor: pointer; transition: 0.2s; border-top: 3px solid transparent; white-space: nowrap;
-        }
+        #bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--bottom-nav-h); background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 2000; box-shadow: 0 -2px 8px rgba(0,0,0,0.05); padding-bottom: env(safe-area-inset-bottom); overflow-x: auto; }
+        .nav-tab { flex: 1 0 auto; min-width: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 9px; font-weight: 600; color: var(--text2); background: none; border: none; padding: 4px 2px; cursor: pointer; transition: 0.2s; border-top: 3px solid transparent; white-space: nowrap; }
         .nav-tab.active { color: var(--primary); border-top-color: var(--primary); }
 
-        .tab-panel {
-            position: fixed; top: var(--status-h); left: 0; right: 0; bottom: var(--bottom-nav-h); z-index: 900; background: var(--bg); overflow-y: auto; padding: 16px; display: none; transition: opacity 0.2s;
-        }
+        .tab-panel { position: fixed; top: var(--status-h); left: 0; right: 0; bottom: var(--bottom-nav-h); z-index: 900; background: var(--bg); overflow-y: auto; padding: 16px; display: none; transition: opacity 0.2s; }
         .tab-panel.open { display: block; }
 
         .info-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px,1fr)); gap: 8px; margin-bottom: 12px; }
         .info-card { background: var(--surface); border-radius: var(--radius-sm); padding: 10px; text-align: center; font-weight: 700; }
-        .info-card .val { font-size: 18px; color: var(--primary); }
-        .info-card .lbl { font-size: 9px; color: var(--text2); text-transform: uppercase; }
+        .info-card .val { font-size: 18px; color: var(--primary); } .info-card .lbl { font-size: 9px; color: var(--text2); text-transform: uppercase; }
 
-        .point-item { display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--surface); border-radius: 8px; margin-bottom: 4px; font-size: 11px; cursor: pointer; }
-        .point-item .idx { font-weight: 800; color: var(--primary); }
+        .point-item { display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: var(--surface); border-radius: 8px; margin-bottom: 4px; font-size: 11px; cursor: pointer; }
+        .point-item .idx { font-weight: 800; color: var(--primary); min-width: 22px; text-align: center; }
         .point-item .coords { flex:1; font-size: 9px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .del-btn { background: var(--danger); color:#fff; border:none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; flex-shrink: 0; }
+        .point-item .btn-sm-icon { background: var(--surface2); border: none; border-radius: 4px; padding: 4px 6px; cursor: pointer; font-size: 12px; color: var(--text); }
+        .del-btn { background: var(--danger); color:#fff; border:none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; flex-shrink: 0; font-size: 13px; }
 
         .btn { padding: 10px 14px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; transition: 0.2s; font-size: 12px; background: var(--primary); color: #fff; }
-        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
-        .btn-block { display: block; width: 100%; margin-bottom: 6px; }
-        .btn-sm { padding: 8px 12px; font-size: 10px; }
+        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); } .btn-block { display: block; width: 100%; margin-bottom: 6px; } .btn-sm { padding: 8px 12px; font-size: 10px; }
 
-        .toast {
-            position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 4000; background: #1a1a1a; color:#fff; padding: 10px 20px; border-radius: 30px; font-weight: 700; font-size: 12px; opacity: 0; transition: opacity 0.3s; pointer-events: none;
-        }
+        .toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 4000; background: #1a1a1a; color:#fff; padding: 10px 20px; border-radius: 30px; font-weight: 700; font-size: 12px; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
         .toast.show { opacity: 1; }
 
         .gnss-checkboxes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
         .gnss-checkbox { display: flex; align-items: center; gap: 8px; background: var(--surface); padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; }
         .gnss-checkbox input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--primary); }
 
-        .sobre-box { background: var(--surface); border-radius: var(--radius-sm); padding: 14px; margin-top: 16px; font-size: 11px; line-height: 1.5; color: var(--text2); border-left: 4px solid var(--primary); }
-        .sobre-box h4 { color: var(--text); margin-bottom: 4px; font-size: 13px; }
+        .sobre-box { background: var(--surface); border-radius: var(--radius-sm); padding: 14px; margin-top: 16px; font-size: 11px; line-height: 1.5; color: var(--text2); border-left: 4px solid var(--primary); } .sobre-box h4 { color: var(--text); margin-bottom: 4px; font-size: 13px; }
 
         .config-section, .tool-section { margin-bottom: 14px; background: var(--surface); border-radius: var(--radius-sm); padding: 12px; }
         .config-section label, .tool-section label { display: block; font-weight: 700; font-size: 12px; margin-bottom: 4px; color: var(--text); }
-        .config-section select, .config-section input, .tool-section select, .tool-section input {
-            width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 13px; margin-bottom: 6px;
-        }
-        .tool-result { background: var(--surface2); border-radius: 8px; padding: 10px; font-size: 12px; margin-top: 8px; line-height: 1.6; }
-        .tool-result strong { color: var(--primary); }
+        .config-section select, .config-section input, .tool-section select, .tool-section input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 13px; margin-bottom: 6px; }
+        .tool-result { background: var(--surface2); border-radius: 8px; padding: 10px; font-size: 12px; margin-top: 8px; line-height: 1.6; } .tool-result strong { color: var(--primary); }
 
         #lock-overlay { position: fixed; inset: 0; z-index: 5000; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .lock-modal { background: var(--surface); border-radius: 20px; padding: 30px 24px; width: 90%; max-width: 340px; text-align: center; box-shadow: 0 16px 40px rgba(0,0,0,0.5); }
-        .lock-modal h2 { font-size: 20px; margin-bottom: 6px; }
-        .lock-modal p { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+        .lock-modal h2 { font-size: 20px; margin-bottom: 6px; } .lock-modal p { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
         .lock-modal input { width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 8px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface2); color: var(--text); margin-bottom: 16px; font-weight: 700; }
-        .lock-modal .error-msg { color: var(--danger); font-size: 12px; margin-bottom: 8px; display: none; }
-        .lock-modal button { width: 100%; padding: 14px; font-size: 16px; }
+        .lock-modal .error-msg { color: var(--danger); font-size: 12px; margin-bottom: 8px; display: none; } .lock-modal button { width: 100%; padding: 14px; font-size: 16px; }
 
         @media (min-width: 768px) {
-            .map-floating.info { left: 20px; max-width: 350px; }
-            .leaflet-control-zoom { right: 20px !important; }
+            .map-floating.info { max-width: 450px; }
             .nav-tab { font-size: 10px; }
         }
     </style>
 </head>
 <body>
     <div id="lock-overlay">
-        <div class="lock-modal">
-            <h2>🔐 GeoÁrea GNSS</h2>
-            <p>Digite a senha de acesso</p>
-            <input type="password" id="lock-password" inputmode="numeric" maxlength="4" placeholder="····" autocomplete="off">
-            <div class="error-msg" id="lock-error">Senha incorreta</div>
-            <button class="btn btn-primary" id="lock-btn">Entrar</button>
-        </div>
+        <div class="lock-modal"><h2>🔐 GeoÁrea GNSS</h2><p>Digite a senha de acesso</p><input type="password" id="lock-password" inputmode="numeric" maxlength="4" placeholder="····" autocomplete="off"><div class="error-msg" id="lock-error">Senha incorreta</div><button class="btn btn-primary" id="lock-btn">Entrar</button></div>
     </div>
 
     <div id="status-bar">
@@ -190,7 +119,6 @@
 
     <div id="map-container">
         <div id="map"></div>
-        <!-- Info flutuante redesenhada -->
         <div class="map-floating info" id="map-info-overlay">
             <button class="info-toggle" id="info-toggle-btn" onclick="toggleInfoPanel()" title="Minimizar/Expandir">▾</button>
             <div class="info-grid">
@@ -219,7 +147,7 @@
             <div class="info-card"><div class="val" id="data-err">--</div><div class="lbl">Erro Médio (m)</div></div>
             <div class="info-card"><div class="val" id="data-pts">0</div><div class="lbl">Vértices</div></div>
         </div>
-        <h4 style="margin:8px 0;">📌 Vértices</h4>
+        <h4 style="margin:8px 0;">📌 Vértices <small style="color:var(--text2);">(use as setas para reordenar)</small></h4>
         <div id="lista-pontos-container" style="max-height:40vh; overflow-y:auto;"></div>
         <div style="margin-top:10px;">
             <button class="btn btn-outline btn-block" onclick="abrirModal('modal-projeto')">💾 Salvar Projeto</button>
@@ -247,69 +175,19 @@
 
     <div class="tab-panel" id="tab-config">
         <h3>⚙️ Configurações</h3>
-        <div class="config-section">
-            <label>Datum</label>
-            <select id="config-datum" onchange="atualizarDatum()">
-                <option value="SIRGAS2000">SIRGAS 2000</option>
-                <option value="WGS84">WGS 84</option>
-                <option value="SAD69">SAD 69</option>
-            </select>
-        </div>
-        <div class="config-section">
-            <label>🛰️ Sistemas GNSS ativos</label>
-            <div class="gnss-checkboxes" style="margin-top:8px;">
-                <label class="gnss-checkbox"><input type="checkbox" id="gnss-gps" checked onchange="salvarConfigGNSS()"><span>🇺🇸 GPS</span></label>
-                <label class="gnss-checkbox"><input type="checkbox" id="gnss-glonass" checked onchange="salvarConfigGNSS()"><span>🇷🇺 GLONASS</span></label>
-                <label class="gnss-checkbox"><input type="checkbox" id="gnss-galileo" checked onchange="salvarConfigGNSS()"><span>🇪🇺 Galileo</span></label>
-                <label class="gnss-checkbox"><input type="checkbox" id="gnss-beidou" checked onchange="salvarConfigGNSS()"><span>🇨🇳 BeiDou</span></label>
-            </div>
-        </div>
-        <div class="config-section">
-            <label>Modo Automático</label>
-            <select id="config-auto-mode" onchange="salvarConfigAutoMode()">
-                <option value="time">Tempo</option>
-                <option value="distance">Distância</option>
-                <option value="both">Ambos</option>
-            </select>
-        </div>
-        <div class="config-section">
-            <label>Intervalo (segundos)</label>
-            <input type="number" id="config-auto-interval" value="5" min="1" onchange="salvarConfigAutoInterval()">
-        </div>
-        <div class="config-section">
-            <label>Limiar de precisão (m)</label>
-            <input type="number" id="config-precision-threshold" value="5.0" step="0.1" onchange="salvarConfigPrecision()">
-        </div>
-        <div class="sobre-box">
-            <h4>📘 Sobre</h4>
-            <p>Aplicativo desenvolvido para coleta de dados GNSS e cálculo de áreas e distâncias em campo. Utiliza sistemas GNSS multiconstelação (GPS, GLONASS, Galileo e BeiDou), com referência no sistema SIRGAS 2000, incluindo controle de precisão e cálculo de erro médio. Indicado para uso técnico preliminar e educacional. Não substitui equipamentos geodésicos de alta precisão (RTK).</p>
-            <p style="margin-top:8px;"><strong>Desenvolvido por:</strong> J. P. Santos<br>
-            <strong>Contato:</strong> <a href="mailto:santosjp@uft.edu.br">santosjp@uft.edu.br</a><br>
-            <strong>Versão:</strong> 1.51</p>
-        </div>
+        <div class="config-section"><label>Datum</label><select id="config-datum" onchange="atualizarDatum()"><option value="SIRGAS2000">SIRGAS 2000</option><option value="WGS84">WGS 84</option><option value="SAD69">SAD 69</option></select></div>
+        <div class="config-section"><label>🛰️ Sistemas GNSS ativos</label><div class="gnss-checkboxes" style="margin-top:8px;"><label class="gnss-checkbox"><input type="checkbox" id="gnss-gps" checked onchange="salvarConfigGNSS()"><span>🇺🇸 GPS</span></label><label class="gnss-checkbox"><input type="checkbox" id="gnss-glonass" checked onchange="salvarConfigGNSS()"><span>🇷🇺 GLONASS</span></label><label class="gnss-checkbox"><input type="checkbox" id="gnss-galileo" checked onchange="salvarConfigGNSS()"><span>🇪🇺 Galileo</span></label><label class="gnss-checkbox"><input type="checkbox" id="gnss-beidou" checked onchange="salvarConfigGNSS()"><span>🇨🇳 BeiDou</span></label></div></div>
+        <div class="config-section"><label>Modo Automático</label><select id="config-auto-mode" onchange="salvarConfigAutoMode()"><option value="time">Tempo</option><option value="distance">Distância</option><option value="both">Ambos</option></select></div>
+        <div class="config-section"><label>Intervalo (segundos)</label><input type="number" id="config-auto-interval" value="5" min="1" onchange="salvarConfigAutoInterval()"></div>
+        <div class="config-section"><label>Limiar de precisão (m)</label><input type="number" id="config-precision-threshold" value="5.0" step="0.1" onchange="salvarConfigPrecision()"></div>
+        <div class="sobre-box"><h4>📘 Sobre</h4><p>Aplicativo desenvolvido para coleta de dados GNSS e cálculo de áreas e distâncias em campo. Utiliza sistemas GNSS multiconstelação (GPS, GLONASS, Galileo e BeiDou), com referência no sistema SIRGAS 2000, incluindo controle de precisão e cálculo de erro médio. Indicado para uso técnico preliminar e educacional. Não substitui equipamentos geodésicos de alta precisão (RTK).</p><p style="margin-top:8px;"><strong>Desenvolvido por:</strong> J. P. Santos<br><strong>Contato:</strong> <a href="mailto:santosjp@uft.edu.br">santosjp@uft.edu.br</a><br><strong>Versão:</strong> 1.51</p></div>
     </div>
 
     <div class="tab-panel" id="tab-ferramentas">
         <h3>🔧 Ferramentas</h3>
-        <div class="tool-section">
-            <label>📏 Distância e Azimute entre Pontos</label>
-            <select id="tool-dist-p1"><option value="">Selecione o ponto 1</option></select>
-            <select id="tool-dist-p2"><option value="">Selecione o ponto 2</option></select>
-            <button class="btn btn-block btn-sm" onclick="calcularDistanciaAzimute()">Calcular Distância e Azimute</button>
-            <div class="tool-result" id="result-dist-azimute" style="display:none;"></div>
-        </div>
-        <div class="tool-section">
-            <label>📍 Adicionar Ponto por Coordenadas</label>
-            <input type="number" id="tool-add-lat" placeholder="Latitude (ex: -15.7801)" step="any">
-            <input type="number" id="tool-add-lng" placeholder="Longitude (ex: -47.9292)" step="any">
-            <input type="number" id="tool-add-alt" placeholder="Altitude (opcional)" step="any">
-            <button class="btn btn-block btn-sm" onclick="adicionarPontoManual()">Adicionar Ponto</button>
-        </div>
-        <div class="tool-section">
-            <label>🔍 Informações do Ponto</label>
-            <select id="tool-info-ponto" onchange="exibirInfoPonto()"><option value="">Selecione um ponto</option></select>
-            <div class="tool-result" id="result-info-ponto" style="display:none;"></div>
-        </div>
+        <div class="tool-section"><label>📏 Distância e Azimute entre Pontos</label><select id="tool-dist-p1"><option value="">Selecione o ponto 1</option></select><select id="tool-dist-p2"><option value="">Selecione o ponto 2</option></select><button class="btn btn-block btn-sm" onclick="calcularDistanciaAzimute()">Calcular Distância e Azimute</button><div class="tool-result" id="result-dist-azimute" style="display:none;"></div></div>
+        <div class="tool-section"><label>📍 Adicionar Ponto por Coordenadas</label><input type="number" id="tool-add-lat" placeholder="Latitude (ex: -15.7801)" step="any"><input type="number" id="tool-add-lng" placeholder="Longitude (ex: -47.9292)" step="any"><input type="number" id="tool-add-alt" placeholder="Altitude (opcional)" step="any"><button class="btn btn-block btn-sm" onclick="adicionarPontoManual()">Adicionar Ponto</button></div>
+        <div class="tool-section"><label>🔍 Informações do Ponto</label><select id="tool-info-ponto" onchange="exibirInfoPonto()"><option value="">Selecione um ponto</option></select><div class="tool-result" id="result-info-ponto" style="display:none;"></div></div>
     </div>
 
     <div id="bottom-nav">
@@ -322,21 +200,8 @@
 
     <div class="toast" id="toast"></div>
 
-    <div class="modal-overlay" id="modal-projeto" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:3000;">
-        <div style="background:var(--surface);padding:20px;border-radius:14px;width:90%;max-width:350px;">
-            <h3>Salvar Projeto</h3>
-            <input type="text" id="input-projeto-nome" placeholder="Nome do projeto" style="width:100%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);">
-            <button class="btn btn-block" onclick="salvarProjeto()">Salvar</button>
-            <button class="btn btn-outline btn-block" onclick="fecharModal('modal-projeto')">Cancelar</button>
-        </div>
-    </div>
-    <div class="modal-overlay" id="modal-gerenciar" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:3000;">
-        <div style="background:var(--surface);padding:20px;border-radius:14px;width:90%;max-width:350px;">
-            <h3>Projetos Salvos</h3>
-            <div id="lista-projetos" style="max-height:40vh;overflow-y:auto;"></div>
-            <button class="btn btn-outline btn-block" onclick="fecharModal('modal-gerenciar')">Fechar</button>
-        </div>
-    </div>
+    <div class="modal-overlay" id="modal-projeto" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:3000;"><div style="background:var(--surface);padding:20px;border-radius:14px;width:90%;max-width:350px;"><h3>Salvar Projeto</h3><input type="text" id="input-projeto-nome" placeholder="Nome do projeto" style="width:100%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);"><button class="btn btn-block" onclick="salvarProjeto()">Salvar</button><button class="btn btn-outline btn-block" onclick="fecharModal('modal-projeto')">Cancelar</button></div></div>
+    <div class="modal-overlay" id="modal-gerenciar" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:3000;"><div style="background:var(--surface);padding:20px;border-radius:14px;width:90%;max-width:350px;"><h3>Projetos Salvos</h3><div id="lista-projetos" style="max-height:40vh;overflow-y:auto;"></div><button class="btn btn-outline btn-block" onclick="fecharModal('modal-gerenciar')">Fechar</button></div></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
@@ -375,8 +240,7 @@
             }
 
             const state = {
-                pontos: [],
-                currentPos: null,
+                pontos: [], currentPos: null,
                 satelitesPorSistema: { gps:0, glonass:0, galileo:0, beidou:0 },
                 gnssAtivos: { gps: true, glonass: true, galileo: true, beidou: true },
                 autoMode: false, autoInterval: null, autoModeType: 'time', autoIntervalSeconds: 5,
@@ -458,11 +322,21 @@
             function atualizarLista() {
                 const c = $('lista-pontos-container'); if(!c) return;
                 c.innerHTML = state.pontos.length ? state.pontos.map((p,i)=>`
-                    <div class="point-item" onclick="centralizarPonto(${i})">
-                        <span class="idx">#${i+1}</span>
-                        <span class="coords">${p.lat.toFixed(6)},${p.lng.toFixed(6)} | ${p.utm_zonaStr} ${p.utm_e.toFixed(1)} ${p.utm_n.toFixed(1)} | Prec:${p.precision.toFixed(1)}m</span>
-                        <button class="del-btn" onclick="event.stopPropagation();deletarPonto(${i})">×</button>
+                    <div class="point-item" style="cursor:default;">
+                        <span class="idx" onclick="centralizarPonto(${i})" style="cursor:pointer;">#${i+1}</span>
+                        <span class="coords" onclick="centralizarPonto(${i})" style="cursor:pointer;">${p.lat.toFixed(6)},${p.lng.toFixed(6)} | ${p.utm_zonaStr} ${p.utm_e.toFixed(1)} ${p.utm_n.toFixed(1)} | Prec:${p.precision.toFixed(1)}m</span>
+                        <button class="btn-sm-icon" onclick="moverPonto(${i}, -1)" title="Mover para cima" ${i===0?'disabled':''}>▲</button>
+                        <button class="btn-sm-icon" onclick="moverPonto(${i}, 1)" title="Mover para baixo" ${i===state.pontos.length-1?'disabled':''}>▼</button>
+                        <button class="del-btn" onclick="deletarPonto(${i})">×</button>
                     </div>`).join('') : '<p style="text-align:center;color:var(--text2);">Nenhum ponto</p>';
+            }
+
+            function moverPonto(index, direction) {
+                const newIndex = index + direction;
+                if (newIndex < 0 || newIndex >= state.pontos.length) return;
+                [state.pontos[index], state.pontos[newIndex]] = [state.pontos[newIndex], state.pontos[index]];
+                atualizarPoligono(); atualizarUI(); atualizarLista(); salvar();
+                showToast(`Ponto #${index+1} movido para posição #${newIndex+1}`, 'success');
             }
 
             function atualizarDropdownsFerramentas() {
@@ -540,10 +414,8 @@
             }
 
             function centralizarUsuario() {
-                if(state.currentPos) {
-                    map.setView([state.currentPos.lat, state.currentPos.lng], 18, {animate:true});
-                    showToast('📍 Centralizado na sua posição','success');
-                } else { showToast('⚠️ Sinal GNSS indisponível','warn'); }
+                if(state.currentPos) { map.setView([state.currentPos.lat, state.currentPos.lng], 18, {animate:true}); showToast('📍 Centralizado','success'); }
+                else { showToast('⚠️ Sinal GNSS indisponível','warn'); }
             }
 
             function toggleInfoPanel() {
@@ -583,7 +455,6 @@
                 r.innerHTML=`<strong>Ponto #${i+1}</strong><br>Lat: ${p.lat.toFixed(7)}°<br>Lng: ${p.lng.toFixed(7)}°<br>UTM: ${p.utm_zonaStr} E:${p.utm_e.toFixed(2)} N:${p.utm_n.toFixed(2)}<br>Alt: ${p.alt!=null?p.alt.toFixed(2)+' m':'N/D'}<br>Prec: ${p.precision.toFixed(1)} m<br>Data: ${new Date(p.timestamp).toLocaleString('pt-BR')}`;
             }
 
-            // ═══════════ EXPORTAÇÃO ═══════════
             function exportarKML() {
                 if(state.pontos.length<3) { showToast('Mínimo 3 pontos','warn'); return; }
                 let kml=`<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n<name>${state.projetoNome}</name>\n<Placemark>\n<name>${state.projetoNome}</name>\n<Polygon>\n<outerBoundaryIs>\n<LinearRing>\n<coordinates>\n`;
@@ -592,7 +463,6 @@
                 download(kml, state.projetoNome+'.kml', 'application/vnd.google-earth.kml+xml');
                 showToast('KML exportado!','success');
             }
-
             function exportarCSV() {
                 if(!state.pontos.length) { showToast('Sem pontos','warn'); return; }
                 let csv='ID,Latitude,Longitude,Altitude,Precisao(m),UTM_E,UTM_N,UTM_Zona,Timestamp\n';
@@ -602,7 +472,6 @@
                 download(csv, state.projetoNome+'.csv', 'text/csv');
                 showToast('CSV exportado!','success');
             }
-
             function exportarGeoJSON() {
                 if(state.pontos.length<3) { showToast('Mínimo 3 pontos','warn'); return; }
                 const coords=state.pontos.map(p=>[p.lng,p.lat]); coords.push(coords[0]);
@@ -610,20 +479,17 @@
                 download(JSON.stringify(gj,null,2), state.projetoNome+'.geojson', 'application/geo+json');
                 showToast('GeoJSON exportado!','success');
             }
-
             function download(content, filename, mime) {
                 const blob=new Blob([content],{type:mime}), a=document.createElement('a');
                 a.href=URL.createObjectURL(blob); a.download=filename; a.click(); URL.revokeObjectURL(a.href);
             }
-
             function compartilhar() {
                 if(state.pontos.length<3) { showToast('Mínimo 3 pontos','warn'); return; }
                 const {area}=calcularAreaPerimetroUTM();
                 const texto=`GeoÁrea GNSS\nÁrea: ${area.toFixed(2)} m² (${(area/10000).toFixed(4)} ha)\nVértices: ${state.pontos.length}\nErro médio: ${state.erroMedio.toFixed(2)} m`;
                 if(navigator.share) navigator.share({text:texto}).catch(()=>{});
-                else { navigator.clipboard.writeText(texto); showToast('Copiado para área de transferência','success'); }
+                else { navigator.clipboard.writeText(texto); showToast('Copiado!','success'); }
             }
-
             function abrirRelatorio() {
                 const {area,perimetro}=calcularAreaPerimetroUTM();
                 const precs=state.pontos.map(p=>p.precision);
@@ -636,16 +502,13 @@
                 $('relatorio-content').innerHTML=html;
                 $('tab-relatorio').style.display='block';
             }
-
             function baixarRelatorio() {
                 const html=$('relatorio-content').innerHTML;
                 const full=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório</title><style>body{font-family:sans-serif;max-width:700px;margin:20px auto;padding:20px;line-height:1.6}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:4px;text-align:center}th{background:#f0f0f0}</style></head><body>${html}</body></html>`;
                 download(full, 'Relatorio_'+state.projetoNome+'.html', 'text/html');
                 showToast('Relatório baixado!','success');
             }
-
             function abrirImportar() { $('file-import').click(); }
-
             function importarArquivo(event) {
                 const file=event.target.files[0]; if(!file) return;
                 const reader=new FileReader();
@@ -661,32 +524,22 @@
                 reader.readAsText(file);
                 event.target.value='';
             }
-
             function importarGeoJSON(gj) {
                 const feats=gj.features||[gj];
                 const coords=feats[0]?.geometry?.coordinates?.[0]||feats[0]?.coordinates?.[0]||[];
                 if(coords.length<3) { showToast('GeoJSON inválido','error'); return; }
-                state.pontos=coords.slice(0,-1).map((c,i)=>{
-                    const utm=latLngToUTM(c[1],c[0]);
-                    return {lat:c[1],lng:c[0],alt:c[2]||null,precision:1.0,utm_e:utm.easting,utm_n:utm.northing,utm_zonaStr:utm.zonaStr,timestamp:new Date().toISOString()};
-                });
+                state.pontos=coords.slice(0,-1).map((c,i)=>{const utm=latLngToUTM(c[1],c[0]); return {lat:c[1],lng:c[0],alt:c[2]||null,precision:1.0,utm_e:utm.easting,utm_n:utm.northing,utm_zonaStr:utm.zonaStr,timestamp:new Date().toISOString()};});
                 finalizarImportacao();
             }
-
             function importarKML(content) {
-                const parser=new DOMParser();
-                const doc=parser.parseFromString(content,'text/xml');
+                const parser=new DOMParser(); const doc=parser.parseFromString(content,'text/xml');
                 const coordText=doc.querySelector('coordinates')?.textContent?.trim();
                 if(!coordText) { showToast('KML sem coordenadas','error'); return; }
                 const coords=coordText.split(/\s+/).filter(c=>c.includes(',')).map(c=>{const p=c.split(','); return {lng:parseFloat(p[0]),lat:parseFloat(p[1]),alt:parseFloat(p[2])||null};});
                 if(coords.length<3) { showToast('KML inválido','error'); return; }
-                state.pontos=coords.slice(0,-1).map((c,i)=>{
-                    const utm=latLngToUTM(c.lat,c.lng);
-                    return {lat:c.lat,lng:c.lng,alt:c.alt,precision:1.0,utm_e:utm.easting,utm_n:utm.northing,utm_zonaStr:utm.zonaStr,timestamp:new Date().toISOString()};
-                });
+                state.pontos=coords.slice(0,-1).map((c,i)=>{const utm=latLngToUTM(c.lat,c.lng); return {lat:c.lat,lng:c.lng,alt:c.alt,precision:1.0,utm_e:utm.easting,utm_n:utm.northing,utm_zonaStr:utm.zonaStr,timestamp:new Date().toISOString()};});
                 finalizarImportacao();
             }
-
             function importarCSV(content) {
                 const lines=content.split('\n').filter(l=>l.trim()&&!l.startsWith('Área')&&!l.startsWith('Hectares')&&!l.startsWith('Perímetro')&&!l.startsWith('ID,'));
                 const pts=[];
@@ -701,28 +554,23 @@
                 state.pontos=pts;
                 finalizarImportacao();
             }
-
             function finalizarImportacao() {
                 state.erroMedio=state.pontos.length?state.pontos.reduce((a,b)=>a+b.precision,0)/state.pontos.length:0;
                 atualizarPoligono(); atualizarUI(); atualizarLista(); salvar();
                 showToast(`${state.pontos.length} pontos importados!`,'success');
             }
 
-            function salvar() { try{ localStorage.setItem('geoarea_v5', JSON.stringify({pontos:state.pontos, projeto:state.projetoNome, dark:state.darkMode, precision:state.precisionThreshold, datum:state.datum, autoType:state.autoModeType, autoInt:state.autoIntervalSeconds, gnssAtivos:state.gnssAtivos})); }catch(e){} }
+            function salvar() { try{ localStorage.setItem('geoarea_v6', JSON.stringify({pontos:state.pontos, projeto:state.projetoNome, dark:state.darkMode, precision:state.precisionThreshold, datum:state.datum, autoType:state.autoModeType, autoInt:state.autoIntervalSeconds, gnssAtivos:state.gnssAtivos})); }catch(e){} }
             function carregar() {
-                const d=JSON.parse(localStorage.getItem('geoarea_v5')||'{}');
+                const d=JSON.parse(localStorage.getItem('geoarea_v6')||'{}');
                 if(d.pontos) state.pontos=d.pontos;
-                state.projetoNome=d.projeto||'Área sem nome';
-                state.darkMode=d.dark||false;
+                state.projetoNome=d.projeto||'Área sem nome'; state.darkMode=d.dark||false;
                 if(state.darkMode) document.body.classList.add('dark-mode');
-                state.precisionThreshold=d.precision||5.0;
-                state.autoModeType=d.autoType||'time';
-                state.autoIntervalSeconds=d.autoInt||5;
+                state.precisionThreshold=d.precision||5.0; state.autoModeType=d.autoType||'time'; state.autoIntervalSeconds=d.autoInt||5;
                 state.gnssAtivos=d.gnssAtivos||{gps:true,glonass:true,galileo:true,beidou:true};
                 ['config-precision-threshold','config-auto-mode','config-auto-interval','config-datum'].forEach(id=>{if($(id))$(id).value=state[id==='config-precision-threshold'?'precisionThreshold':id==='config-auto-mode'?'autoModeType':id==='config-auto-interval'?'autoIntervalSeconds':'datum'];});
                 ['gnss-gps','gnss-glonass','gnss-galileo','gnss-beidou'].forEach(id=>{const k=id.replace('gnss-',''); if($(id))$(id).checked=state.gnssAtivos[k];});
-                aplicarVisibilidadeGNSS();
-                atualizarPoligono(); atualizarUI(); atualizarLista();
+                aplicarVisibilidadeGNSS(); atualizarPoligono(); atualizarUI(); atualizarLista();
             }
 
             function salvarConfigGNSS() {
@@ -734,7 +582,6 @@
                 ['gps','glonass','galileo','beidou'].forEach(s=>{ const el=$(s+'-icon'); if(el)el.style.display=state.gnssAtivos[s]?'inline':'none'; });
                 if(state.currentPos&&state.satelliteCount) { state.satelitesPorSistema=estimarSatelites(state.satelliteCount); atualizarStatus(); }
             }
-
             function salvarConfigAutoMode() { state.autoModeType=$('config-auto-mode').value; salvar(); }
             function salvarConfigAutoInterval() { state.autoIntervalSeconds=parseInt($('config-auto-interval').value)||5; salvar(); }
             function salvarConfigPrecision() { state.precisionThreshold=parseFloat($('config-precision-threshold').value)||5.0; salvar(); }
@@ -750,7 +597,6 @@
                     atualizarStatus();
                 }, err=>{ if(err.code===1) showToast('Permissão negada!','error'); }, {enableHighAccuracy:true});
             }
-
             function atualizarStatus() {
                 if(!state.currentPos) return;
                 const p=state.currentPos;
@@ -780,6 +626,7 @@
             window.coletarPonto=coletarPonto; window.toggleModoAuto=toggleModoAuto; window.limparPontos=limparPontos;
             window.centralizarPonto=(i)=>{if(state.pontos[i])map.setView([state.pontos[i].lat,state.pontos[i].lng],19);};
             window.deletarPonto=(i)=>{state.pontos.splice(i,1);atualizarPoligono();atualizarUI();atualizarLista();salvar();};
+            window.moverPonto=moverPonto;
             window.calcularDistanciaAzimute=calcularDistanciaAzimute; window.adicionarPontoManual=adicionarPontoManual;
             window.exibirInfoPonto=exibirInfoPonto; window.centralizarUsuario=centralizarUsuario;
             window.toggleInfoPanel=toggleInfoPanel;
@@ -790,19 +637,19 @@
             window.salvarProjeto=()=>{
                 const nome=$('input-projeto-nome').value.trim(); if(!nome) return;
                 state.projetoNome=nome;
-                const projetos=JSON.parse(localStorage.getItem('geoarea_projetos_v5')||'{}');
+                const projetos=JSON.parse(localStorage.getItem('geoarea_projetos_v6')||'{}');
                 projetos[nome]={pontos:state.pontos,datum:state.datum};
-                localStorage.setItem('geoarea_projetos_v5',JSON.stringify(projetos));
+                localStorage.setItem('geoarea_projetos_v6',JSON.stringify(projetos));
                 fecharModal('modal-projeto'); showToast('Projeto salvo!','success');
             };
             window.abrirGerenciarProjetos=()=>{
-                const projetos=JSON.parse(localStorage.getItem('geoarea_projetos_v5')||'{}');
+                const projetos=JSON.parse(localStorage.getItem('geoarea_projetos_v6')||'{}');
                 const lista=$('lista-projetos');
                 lista.innerHTML=Object.keys(projetos).map(n=>`<div class="point-item" onclick="carregarProjeto('${n}')">📁 ${n} (${projetos[n].pontos.length} pts)</div>`).join('')||'Nenhum projeto.';
                 abrirModal('modal-gerenciar');
             };
             window.carregarProjeto=(nome)=>{
-                const projetos=JSON.parse(localStorage.getItem('geoarea_projetos_v5')||'{}');
+                const projetos=JSON.parse(localStorage.getItem('geoarea_projetos_v6')||'{}');
                 if(projetos[nome]) { state.pontos=projetos[nome].pontos; state.projetoNome=nome; atualizarPoligono(); atualizarUI(); atualizarLista(); salvar(); fecharModal('modal-gerenciar'); showToast(`Projeto ${nome} carregado`,'success'); }
             };
             window.toggleDarkMode=()=>{state.darkMode=!state.darkMode;document.body.classList.toggle('dark-mode');salvar();};
